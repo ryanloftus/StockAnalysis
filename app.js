@@ -11,24 +11,33 @@ const blankVal = '--';
 function getDateParams() {
     const now = Math.floor(new Date().getTime() / 1000);
     const oneYearAgo = now - 365 * 24 * 60 * 60;
+    //TODO: can get max date range with 0 instead of oneYearAgo
     return '&resolution=D&from=' + oneYearAgo + '&to=' + now;
 }
 
-function getVal(val) {
-    return (val ? val : blankVal);
+function getDollarVal(val) {
+    return (val ? (Math.round(val * 100) / 100).toFixed(2) : blankVal);
+}
+
+function getCandleTableHTML(close, volume) {
+    let tableHTML = '';
+    for (let i = 0; i < close.length; i++) {
+        tableHTML += '<tr><td>' + getDollarVal(close[i]) + '</td><td>' + volume[i] + '</td></tr>';
+    }
+    return tableHTML;
 }
 
 function renderQuote(quote) {
     const responseField = document.getElementById('quote');
     console.log(JSON.stringify(quote));
     responseField.innerHTML = '<p>' +
-        'Current Price: \$' + getVal(quote.c) +
-        '<br><br>Change: \$' + getVal(quote.d) +
-        '<br><br>Percent Change: ' + getVal(quote.dp) + '%' +
-        '<br><br>High: \$' + getVal(quote.h) +
-        '<br><br>Low (today): \$' + getVal(quote.l) +
-        '<br><br>Open: \$' + getVal(quote.o) +
-        '<br><br>Close: \$' + getVal(quote.pc) +
+        'Current Price: \$' + getDollarVal(quote.c) +
+        '<br><br>Change: \$' + getDollarVal(quote.d) +
+        '<br><br>Percent Change: ' + (quote.dp || blankVal) + '%' +
+        '<br><br>High: \$' + getDollarVal(quote.h) +
+        '<br><br>Low: \$' + getDollarVal(quote.l) +
+        '<br><br>Open: \$' + getDollarVal(quote.o) +
+        '<br><br>Close: \$' + getDollarVal(quote.pc) +
         '</p>';
 }
 
@@ -54,9 +63,9 @@ async function getStockQuote() {
 function renderCandle(candle) {
     if (candle.s === 'ok') {
         const responseField = document.getElementById('candle');
-        console.log(candle.c.length);
-        responseField.innerHTML = '<p>' + candle.c + '</p>';
-        // responseField.innerHTML = '<table>' + '</table>';
+        responseField.innerHTML = '<table><thead><tr><th>Close</th><th>Volume</th></tr></thead>' +
+            getCandleTableHTML(candle.c, candle.v) +
+            '</table>';
     }
 }
 
