@@ -27,10 +27,19 @@ function makeCandleGraph() {
 }
 
 function getDateParams() {
-    const now = Math.floor(new Date().getTime() / 1000);
-    const oneYearAgo = now - 365 * 24 * 60 * 60;
-    //TODO: make date range configurable
-    return '&resolution=D&from=' + oneYearAgo + '&to=' + now;
+    const now = new Date();
+    const dateRange = document.querySelector('input[name="date-range"]:checked').value;
+    const timeUnit = dateRange.slice(-1);
+    const timeAmount = dateRange.substring(0, dateRange.length - 1);
+    let fromDate = new Date();
+    if (timeUnit === 'y') {
+        fromDate.setFullYear(now.getFullYear() - timeAmount);
+    } else if (timeUnit === 'm') {
+        fromDate.setMonth(now.getMonth() - timeAmount);
+    } else {
+        fromDate.setDate(now.getDate() - timeAmount);
+    }
+    return '&resolution=D' + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
 }
 
 function getReadableDates(dates) {
