@@ -7,17 +7,17 @@ const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
 const ticker = document.getElementById('ticker');
 const submit = document.getElementById('submit');
-let candleGraph = makeGraph();
+let candleGraph = makeCandleGraph();
 
 const blankVal = '--';
 
-function makeGraph() {
+function makeCandleGraph() {
     return new Chart(document.getElementById('candle'), {
         type: 'line', 
         data: {
             labels: [], 
             datasets: [{
-                label: 'Value',
+                label: 'Price',
                 data: [], 
                 fill: false,
                 borderColor: 'rgb(75, 192, 192)'
@@ -33,11 +33,8 @@ function getDateParams() {
     return '&resolution=D&from=' + oneYearAgo + '&to=' + now;
 }
 
-//TODO: remove day of week from date
 function getReadableDates(dates) {
-    let readableDates = [];
-    dates.forEach(date => readableDates.push(new Date(date * 1000).toDateString()));
-    return readableDates;
+    return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 
 function getDollarVal(val) {
@@ -45,35 +42,13 @@ function getDollarVal(val) {
 }
 
 function renderQuote(quote) {
-    const responseField = document.getElementById('quote');
-    responseField.innerHTML = '<p>' +
-        'Current Price: \$' + getDollarVal(quote.c) +
-        '<br><br>Change: \$' + getDollarVal(quote.d) +
-        '<br><br>Percent Change: ' + (quote.dp || blankVal) + '%' +
-        '<br><br>High: \$' + getDollarVal(quote.h) +
-        '<br><br>Low: \$' + getDollarVal(quote.l) +
-        '<br><br>Open: \$' + getDollarVal(quote.o) +
-        '<br><br>Close: \$' + getDollarVal(quote.pc) +
-        '</p>';
-}
-
-async function getStockQuote() {
-    const endpoint = url + quoteParam + ticker.value + apiKey;
-    try {
-        const response = await fetch(endpoint, {
-            method: 'GET',
-            cache: 'no-cache'
-        });
-        if (response.ok) {
-            const jsonResponse = await response.json();
-            renderQuote(jsonResponse);
-        } else {
-            throw new Error('Request failed');
-        }
-    }
-    catch (error) {
-        console.log(error);
-    }
+    document.getElementById('current').innerHTML = '\$' + getDollarVal(quote.c);
+    document.getElementById('change').innerHTML = '\$' + getDollarVal(quote.d);
+    document.getElementById('percent-change').innerHTML = (quote.dp || blankVal) + '%';
+    document.getElementById('high').innerHTML = '\$' + getDollarVal(quote.h);
+    document.getElementById('low').innerHTML = '\$' + getDollarVal(quote.l);
+    document.getElementById('open').innerHTML = '\$' + getDollarVal(quote.o);
+    document.getElementById('close').innerHTML = '\$' + getDollarVal(quote.pc);
 }
 
 function renderCandle(candle) {
@@ -84,8 +59,7 @@ function renderCandle(candle) {
     }
 }
 
-async function getStockCandle() {
-    const endpoint = url + candleParam + ticker.value + getDateParams() + apiKey;
+async function getData(endpoint) {
     try {
         const response = await fetch(endpoint, {
             method: 'GET',
@@ -93,7 +67,7 @@ async function getStockCandle() {
         });
         if (response.ok) {
             const jsonResponse = await response.json();
-            renderCandle(jsonResponse);
+            return jsonResponse;
         } else {
             throw new Error('Request failed');
         }
@@ -104,10 +78,9 @@ async function getStockCandle() {
 }
 
 // TODO: remove unresolved promises when search is clicked?
-// TODO: restructure code so I have consts pointing to each element and I set the value for that element with a setter
-async function displayStockQuote() {
-    getStockQuote();
-    getStockCandle();
+async function displayStockData() {
+    renderQuote(await getData(url + quoteParam + ticker.value + apiKey));
+    renderCandle(await getData(url + candleParam + ticker.value + getDateParams() + apiKey));
 }
 
-submit.onclick = displayStockQuote;
+submit.onclick = displayStockData;

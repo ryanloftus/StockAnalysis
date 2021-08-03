@@ -9,7 +9,17 @@
             <input type="search" name="ticker" value="TSLA.US" id="ticker">
             <button type="button" class="material-icons" id="submit">search</button>
         </form>
-        <div id="quote"></div>
+        <div id="quote">
+            <table>
+                <tr><td>Current Price:</td><td id="current"></td></tr>
+                <tr><td>Change:</td><td id="change"></td></tr>
+                <tr><td>Change %:</td><td id="percent-change"></td></tr>
+                <tr><td>High:</td><td id="high"></td></tr>
+                <tr><td>Low:</td><td id="low"></td></tr>
+                <tr><td>Open:</td><td id="open"></td></tr>
+                <tr><td>Close:</td><td id="close"></td></tr>
+            </table>
+        </div>
         <canvas id="candle"></canvas>
         <script src="./bundle.js"></script>
     </body>
