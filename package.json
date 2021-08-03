@@ -1,0 +1,23 @@
+{
+  "name": "stockanalysis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "dependencies": {
+    "chart.js": "^3.5.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryanloftus/StockAnalysis.git"
+  },
+  "author": "Ryan Loftus",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ryanloftus/StockAnalysis/issues"
+  },
+  "homepage": "https://github.com/ryanloftus/StockAnalysis#readme"
+}
