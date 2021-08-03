@@ -19,9 +19,8 @@ function makeCandleGraph() {
             labels: [], 
             datasets: [{
                 label: 'Price',
-                data: [], 
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)'
+                data: [],
+                borderColor: 'rgb(10, 200, 0)'
             }]
         }
     });
@@ -84,6 +83,11 @@ async function displayStockData() {
     renderCandle(await getData(url + candleParam + ticker.value + getDateParams() + apiKey));
 }
 
+ticker.onkeydown = event => {
+    if (event.code === 'Enter') {
+        displayStockData()
+    }
+};
 submit.onclick = displayStockData;
 },{"./node_modules/chart.js":2}],2:[function(require,module,exports){
 /*!
