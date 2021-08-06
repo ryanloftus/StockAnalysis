@@ -3,6 +3,7 @@
     <head>
         <title>Stock Analysis</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="./style.css" rel="stylesheet">
     </head>
     <body>
         <input type="search" name="ticker" value="TSLA" id="ticker">
@@ -32,8 +33,6 @@
         <input name="date-range" type="radio" id="one-month" value="1m">
         <label for="fifteen-days">15D</label>
         <input name="date-range" type="radio" id="fifteen-days" value="15d">
-        <label for="one-day">1D</label>
-        <input name="date-range" type="radio" id="one-day" value="1d">
         <canvas id="candle"></canvas>
         <script src="./bundle.js"></script>
     </body>

@@ -7,7 +7,6 @@ const candleParam = 'stock/candle?symbol=';
 const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
 const ticker = document.getElementById('ticker');
-const submit = document.getElementById('submit');
 let candleGraph = makeCandleGraph();
 
 const blankVal = '--';
@@ -28,16 +27,18 @@ function makeCandleGraph() {
 
 function getDateParams() {
     const now = new Date();
+    let fromDate = new Date();
     const dateRange = document.querySelector('input[name="date-range"]:checked').value;
     const timeUnit = dateRange.slice(-1);
     const timeAmount = dateRange.substring(0, dateRange.length - 1);
-    let fromDate = new Date();
     if (timeUnit === 'y') {
         fromDate.setFullYear(now.getFullYear() - timeAmount);
     } else if (timeUnit === 'm') {
         fromDate.setMonth(now.getMonth() - timeAmount);
-    } else {
+    } else if (timeUnit === 'd') {
         fromDate.setDate(now.getDate() - timeAmount);
+    } else {
+        fromDate = new Date(0);
     }
     return '&resolution=D' + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
 }
@@ -50,14 +51,29 @@ function getDollarVal(val) {
     return (val ? (Math.round(val * 100) / 100).toFixed(2) : blankVal);
 }
 
+function getPercentVal(val) {
+    return val ? val.toString() + '%' : blankVal;
+}
+
+function setQuoteVal(element, val, isInDollars, isChange) {
+    element.innerHTML = isInDollars ? getDollarVal(val) : getPercentVal(val);
+    if (isChange) {
+        if (val > 0) {
+            element.setAttribute('class', 'up');
+        } else if (val < 0) {
+            element.setAttribute('class', 'down');
+        }
+    }
+}
+
 function renderQuote(quote) {
-    document.getElementById('current').innerHTML = '\$' + getDollarVal(quote.c);
-    document.getElementById('change').innerHTML = '\$' + getDollarVal(quote.d);
-    document.getElementById('percent-change').innerHTML = (quote.dp || blankVal) + '%';
-    document.getElementById('high').innerHTML = '\$' + getDollarVal(quote.h);
-    document.getElementById('low').innerHTML = '\$' + getDollarVal(quote.l);
-    document.getElementById('open').innerHTML = '\$' + getDollarVal(quote.o);
-    document.getElementById('close').innerHTML = '\$' + getDollarVal(quote.pc);
+    setQuoteVal(document.getElementById('current'), quote.c, true, false);
+    setQuoteVal(document.getElementById('change'), quote.d, true, true);
+    setQuoteVal(document.getElementById('percent-change'), quote.dp, false, true);
+    setQuoteVal(document.getElementById('high'), quote.h, true, false);
+    setQuoteVal(document.getElementById('low'), quote.l, true, false);
+    setQuoteVal(document.getElementById('open'), quote.o, true, false);
+    setQuoteVal(document.getElementById('close'), quote.pc, true, false);
 }
 
 function renderCandle(candle) {
@@ -86,7 +102,6 @@ async function getData(endpoint) {
     }
 }
 
-// TODO: remove unresolved promises when search is clicked?
 async function displayStockData() {
     renderQuote(await getData(url + quoteParam + ticker.value + apiKey));
     renderCandle(await getData(url + candleParam + ticker.value + getDateParams() + apiKey));
@@ -97,7 +112,7 @@ ticker.onkeydown = event => {
         displayStockData()
     }
 };
-submit.onclick = displayStockData;
+document.getElementById('submit').onclick = displayStockData;
 },{"./node_modules/chart.js":2}],2:[function(require,module,exports){
 /*!
  * Chart.js v3.5.0
