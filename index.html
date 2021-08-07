@@ -3,6 +3,7 @@
     <head>
         <title>Stock Analysis</title>
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
         <link href="./style.css" rel="stylesheet">
     </head>
     <body>
@@ -21,22 +22,17 @@
                 <tr><td>Close:</td><td id="close"></td></tr>
             </table>
         </section>
-        <label for="max">Max</label>
-        <input name="date-range" type="radio" id="max" value="max">
-        <label for="five-years">5Y</label>
-        <input name="date-range" type="radio" id="five-years" value="5y">
-        <label for="three-years">3Y</label>
-        <input name="date-range" type="radio" id="three-years" value="3y">
-        <label for="ytd">YTD</label>
-        <input name="date-range" type="radio" id="ytd" value="1y" checked="true">
-        <label for="six-months">6M</label>
-        <input name="date-range" type="radio" id="six-months" value="6m">
-        <label for="one-month">1M</label>
-        <input name="date-range" type="radio" id="one-month" value="1m">
-        <label for="fifteen-days">15D</label>
-        <input name="date-range" type="radio" id="fifteen-days" value="15d">
-        <!-- <label for="custom">Custom</label>
-        <input name="custom" type="radio" id="custom" value="custom"> -->
+        <ul id="select-timespan">
+            <li><input name="date-range" type="radio" id="max" value="max"><label for="max">Max</label></li>
+            <li><input name="date-range" type="radio" id="five-years" value="5y"><label for="five-years">5Y</label></li>
+            <li><input name="date-range" type="radio" id="three-years" value="3y"><label for="three-years">3Y</label></li>
+            <li><input name="date-range" type="radio" id="ytd" value="1y" checked="true"><label for="ytd">YTD</label></li>
+            <li><input name="date-range" type="radio" id="six-months" value="6m"><label for="six-months">6M</label></li>
+            <li><input name="date-range" type="radio" id="three-months" value="3m"><label for="three-months">3M</label></li>
+            <li><input name="date-range" type="radio" id="one-month" value="1m"><label for="one-month">1M</label></li>
+            <li><input name="date-range" type="radio" id="fifteen-days" value="15d"><label for="fifteen-days">15D</label></li>
+            <!--<li><label for="custom">Custom</label><input name="custom" type="radio" id="custom" value="custom"></li>-->
+        </ul>
         <canvas id="candle"></canvas>
         <script src="./bundle.js"></script>
     </body>

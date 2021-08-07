@@ -1,3 +1,10 @@
+// TODO: add loading screen for request processing?
+// TODO: add technical analysis section
+// TODO: make tabs within the webpage for the user to switch between (ie. graph, technical analysis, news and ratings, etc)
+// TODO: make the candle graph smaller, maybe put it beside quote info.
+// TODO: display ticker in large letters followed by change and %change and the full name of the stock (ie F 0.34 2.34% Ford Motors)
+// TODO: add a link to a separate webpage "other securities" to find info on non-stock securities
+
 const Chart = require('./node_modules/chart.js');
 
 const url = 'https://finnhub.io/api/v1/';
@@ -99,8 +106,10 @@ async function getData(endpoint) {
 }
 
 async function displayStockData() {
-    renderQuote(await getData(url + quoteParam + ticker.value.toUpperCase() + apiKey));
-    renderCandle(await getData(url + candleParam + ticker.value.toUpperCase() + getDateParams() + apiKey));
+    if (ticker.value) {
+        renderQuote(await getData(url + quoteParam + ticker.value.toUpperCase() + apiKey));
+        renderCandle(await getData(url + candleParam + ticker.value.toUpperCase() + getDateParams() + apiKey));
+    }
 }
 
 ticker.onkeydown = event => {
@@ -109,3 +118,4 @@ ticker.onkeydown = event => {
     }
 };
 document.getElementById('submit').onclick = displayStockData;
+document.getElementsByName('date-range').forEach(element => element.onchange = displayStockData);
