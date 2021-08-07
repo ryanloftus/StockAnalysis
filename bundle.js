@@ -86,10 +86,7 @@ function renderCandle(candle) {
 
 async function getData(endpoint) {
     try {
-        const response = await fetch(endpoint, {
-            method: 'GET',
-            cache: 'no-cache'
-        });
+        const response = await fetch(endpoint, {method: 'GET'});
         if (response.ok) {
             const jsonResponse = await response.json();
             return jsonResponse;
@@ -103,8 +100,8 @@ async function getData(endpoint) {
 }
 
 async function displayStockData() {
-    renderQuote(await getData(url + quoteParam + ticker.value + apiKey));
-    renderCandle(await getData(url + candleParam + ticker.value + getDateParams() + apiKey));
+    renderQuote(await getData(url + quoteParam + ticker.value.toUpperCase() + apiKey));
+    renderCandle(await getData(url + candleParam + ticker.value.toUpperCase() + getDateParams() + apiKey));
 }
 
 ticker.onkeydown = event => {
