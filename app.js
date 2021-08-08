@@ -112,10 +112,19 @@ async function displayStockData() {
     }
 }
 
+async function showContent(tab) {
+    if (tab === 'summary') {
+        
+    } else if (tab === 'technical') {
+
+    } else {
+
+    }
+}
+
 ticker.onkeydown = event => {
     if (event.code === 'Enter') {
         displayStockData()
     }
 };
-document.getElementById('submit').onclick = displayStockData;
 document.getElementsByName('date-range').forEach(element => element.onchange = displayStockData);

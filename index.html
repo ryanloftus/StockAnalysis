@@ -7,11 +7,20 @@
         <link href="./style.css" rel="stylesheet">
     </head>
     <body>
-        <header id="search-bar">
-            <input type="search" name="ticker" placeholder="Search a ticker here." id="ticker">
-            <button type="button" class="material-icons" id="submit">search</button>
-        </header>
-        <section id="quote">
+        <nav id="topnav">
+            <div id="search-bar">
+                <input type="text" name="ticker" placeholder="Search a ticker here." id="ticker">
+                <button id="search" type="button" class="material-icons" onclick="displayStockData()">search</button>
+            </div>
+        </nav>
+        <div id="basic-info"></div>
+        <!-- Tab links -->
+        <div class="tab">
+            <button class="tablinks" onclick="showContent('summary')">Summary</button>
+            <button class="tablinks" onclick="showContent('technical')">Technical Analyis</button>
+            <button class="tablinks" onclick="showContent('news')">News and Ratings</button>
+        </div>
+        <div id="summary" class="tabcontent">
             <table>
                 <tr><td>Current Price:</td><td id="current"></td></tr>
                 <tr><td>Change:</td><td id="change"></td></tr>
@@ -21,19 +30,25 @@
                 <tr><td>Open:</td><td id="open"></td></tr>
                 <tr><td>Close:</td><td id="close"></td></tr>
             </table>
-        </section>
-        <ul id="select-timespan">
-            <li><input name="date-range" type="radio" id="max" value="max"><label for="max">Max</label></li>
-            <li><input name="date-range" type="radio" id="five-years" value="5y"><label for="five-years">5Y</label></li>
-            <li><input name="date-range" type="radio" id="three-years" value="3y"><label for="three-years">3Y</label></li>
-            <li><input name="date-range" type="radio" id="ytd" value="1y" checked="true"><label for="ytd">YTD</label></li>
-            <li><input name="date-range" type="radio" id="six-months" value="6m"><label for="six-months">6M</label></li>
-            <li><input name="date-range" type="radio" id="three-months" value="3m"><label for="three-months">3M</label></li>
-            <li><input name="date-range" type="radio" id="one-month" value="1m"><label for="one-month">1M</label></li>
-            <li><input name="date-range" type="radio" id="fifteen-days" value="15d"><label for="fifteen-days">15D</label></li>
-            <!--<li><label for="custom">Custom</label><input name="custom" type="radio" id="custom" value="custom"></li>-->
-        </ul>
-        <canvas id="candle"></canvas>
+            <ul id="select-timespan">
+                <li><input name="date-range" type="radio" id="max" value="max"><label for="max">Max</label></li>
+                <li><input name="date-range" type="radio" id="five-years" value="5y"><label for="five-years">5Y</label></li>
+                <li><input name="date-range" type="radio" id="three-years" value="3y"><label for="three-years">3Y</label></li>
+                <li><input name="date-range" type="radio" id="ytd" value="1y" checked="true"><label for="ytd">YTD</label></li>
+                <li><input name="date-range" type="radio" id="six-months" value="6m"><label for="six-months">6M</label></li>
+                <li><input name="date-range" type="radio" id="three-months" value="3m"><label for="three-months">3M</label></li>
+                <li><input name="date-range" type="radio" id="one-month" value="1m"><label for="one-month">1M</label></li>
+                <li><input name="date-range" type="radio" id="fifteen-days" value="15d"><label for="fifteen-days">15D</label></li>
+                <!--<li><label for="custom">Custom</label><input name="custom" type="radio" id="custom" value="custom"></li>-->
+            </ul>
+            <canvas id="candle"></canvas>
+        </div>
+        <div id="technical">
+
+        </div>
+        <div id="news">
+
+        </div>
         <script src="./bundle.js"></script>
     </body>
 </html>
