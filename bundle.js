@@ -1,10 +1,10 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // TODO: add loading screen for request processing?
-// TODO: add technical analysis section
-// TODO: make tabs within the webpage for the user to switch between (ie. graph, technical analysis, news and ratings, etc)
+// TODO: add technical analysis + news and ratings tabs
 // TODO: make the candle graph smaller, maybe put it beside quote info.
 // TODO: display ticker in large letters followed by change and %change and the full name of the stock (ie F 0.34 2.34% Ford Motors)
 // TODO: add a link to a separate webpage "other securities" to find info on non-stock securities
+// TODO: separate code into modules
 
 const Chart = require('./node_modules/chart.js');
 
@@ -14,7 +14,8 @@ const candleParam = 'stock/candle?symbol=';
 const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
 const ticker = document.getElementById('ticker');
-let candleGraph = makeCandleGraph();
+const candleGraph = makeCandleGraph();
+const tablinks = Array.from(document.getElementsByClassName('tablinks'));
 
 const blankVal = '--';
 
@@ -113,12 +114,24 @@ async function displayStockData() {
     }
 }
 
+function changeTab(newTab) {
+    tablinks.forEach(element => {
+        if (!document.getElementById(element.value).hasAttribute('hidden')) {
+            element.className = element.className.replace(' active', '');
+            document.getElementById(element.value).setAttribute('hidden', 'hidden');
+        }
+    });
+    newTab.className += ' active';
+    document.getElementById(newTab.value).removeAttribute('hidden');
+}
+
 ticker.onkeydown = event => {
     if (event.code === 'Enter') {
         displayStockData()
     }
 };
-document.getElementById('submit').onclick = displayStockData;
+document.getElementById('search').onclick = displayStockData;
+tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
 document.getElementsByName('date-range').forEach(element => element.onchange = displayStockData);
 },{"./node_modules/chart.js":2}],2:[function(require,module,exports){
 /*!

@@ -1,9 +1,9 @@
 // TODO: add loading screen for request processing?
-// TODO: add technical analysis section
-// TODO: make tabs within the webpage for the user to switch between (ie. graph, technical analysis, news and ratings, etc)
+// TODO: add technical analysis + news and ratings tabs
 // TODO: make the candle graph smaller, maybe put it beside quote info.
 // TODO: display ticker in large letters followed by change and %change and the full name of the stock (ie F 0.34 2.34% Ford Motors)
 // TODO: add a link to a separate webpage "other securities" to find info on non-stock securities
+// TODO: separate code into modules
 
 const Chart = require('./node_modules/chart.js');
 
@@ -13,7 +13,8 @@ const candleParam = 'stock/candle?symbol=';
 const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
 const ticker = document.getElementById('ticker');
-let candleGraph = makeCandleGraph();
+const candleGraph = makeCandleGraph();
+const tablinks = Array.from(document.getElementsByClassName('tablinks'));
 
 const blankVal = '--';
 
@@ -112,14 +113,15 @@ async function displayStockData() {
     }
 }
 
-async function showContent(tab) {
-    if (tab === 'summary') {
-        
-    } else if (tab === 'technical') {
-
-    } else {
-
-    }
+function changeTab(newTab) {
+    tablinks.forEach(element => {
+        if (!document.getElementById(element.value).hasAttribute('hidden')) {
+            element.className = element.className.replace(' active', '');
+            document.getElementById(element.value).setAttribute('hidden', 'hidden');
+        }
+    });
+    newTab.className += ' active';
+    document.getElementById(newTab.value).removeAttribute('hidden');
 }
 
 ticker.onkeydown = event => {
@@ -127,4 +129,6 @@ ticker.onkeydown = event => {
         displayStockData()
     }
 };
+document.getElementById('search').onclick = displayStockData;
+tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
 document.getElementsByName('date-range').forEach(element => element.onchange = displayStockData);

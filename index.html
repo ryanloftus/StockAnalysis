@@ -9,16 +9,16 @@
     <body>
         <nav id="topnav">
             <div id="search-bar">
-                <input type="text" name="ticker" placeholder="Search a ticker here." id="ticker">
-                <button id="search" type="button" class="material-icons" onclick="displayStockData()">search</button>
+                <input id="ticker" type="text" name="ticker" placeholder="Search a ticker here.">
+                <button id="search" type="button" class="material-icons">search</button>
             </div>
         </nav>
         <div id="basic-info"></div>
         <!-- Tab links -->
         <div class="tab">
-            <button class="tablinks" onclick="showContent('summary')">Summary</button>
-            <button class="tablinks" onclick="showContent('technical')">Technical Analyis</button>
-            <button class="tablinks" onclick="showContent('news')">News and Ratings</button>
+            <button class="tablinks active" value="summary">Summary</button>
+            <button class="tablinks" value="technical">Technical Analyis</button>
+            <button class="tablinks" value="news">News and Ratings</button>
         </div>
         <div id="summary" class="tabcontent">
             <table>
@@ -43,11 +43,11 @@
             </ul>
             <canvas id="candle"></canvas>
         </div>
-        <div id="technical">
-
+        <div id="technical" class="tabcontent" hidden>
+            <p>Hello There</p>
         </div>
-        <div id="news">
-
+        <div id="news" class="tabcontent" hidden>
+            <p>Hello There</p>
         </div>
         <script src="./bundle.js"></script>
     </body>
