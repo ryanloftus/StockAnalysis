@@ -20,7 +20,7 @@ const tablinks = Array.from(document.getElementsByClassName('tablinks'));
 const blankVal = '--';
 
 function makeCandleGraph() {
-    return new Chart(document.getElementById('candle'), {
+    return new Chart(document.getElementById('candle-graph'), {
         type: 'line', 
         data: {
             labels: [], 
@@ -75,6 +75,17 @@ function setQuoteVal(element, val, isInDollars, isChange) {
 }
 
 function renderQuote(quote) {
+    const arrow = document.getElementById('change-arrow');
+    if (quote.d > 0) {
+        arrow.className = 'material-icons up';
+        arrow.innerHTML = 'trending_up';
+    } else if (quote.d < 0) {
+        arrow.className = 'material-icons down';
+        arrow.innerHTML = 'trending_down';
+    } else {
+        arrow.className = '';
+        arrow.innerHTML = '';
+    }
     setQuoteVal(document.getElementById('current'), quote.c, true, false);
     setQuoteVal(document.getElementById('change'), quote.d, true, true);
     setQuoteVal(document.getElementById('percent-change'), quote.dp, false, true);
@@ -109,8 +120,10 @@ async function getData(endpoint) {
 
 async function displayStockData() {
     if (ticker.value) {
-        renderQuote(await getData(url + quoteParam + ticker.value.toUpperCase() + apiKey));
-        renderCandle(await getData(url + candleParam + ticker.value.toUpperCase() + getDateParams() + apiKey));
+        const capitalizedTicker = ticker.value.toUpperCase();
+        renderQuote(await getData(url + quoteParam + capitalizedTicker + apiKey));
+        renderCandle(await getData(url + candleParam + capitalizedTicker + getDateParams() + apiKey));
+        document.getElementById('big-ticker').innerHTML = capitalizedTicker;
     }
 }
 

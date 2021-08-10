@@ -13,12 +13,14 @@
                 <button id="search" type="button" class="material-icons">search</button>
             </div>
         </nav>
-        <div id="basic-info"></div>
         <!-- Tab links -->
         <div class="tab">
             <button class="tablinks active" value="summary">Summary</button>
-            <button class="tablinks" value="technical">Technical Analyis</button>
-            <button class="tablinks" value="news">News and Ratings</button>
+            <button class="tablinks" value="technical-analysis">Technical Analyis</button>
+            <button class="tablinks" value="recommendation-trends">Recommendation Trends</button>
+        </div>
+        <div id="basic-info">
+            <h1><span id="big-ticker"></span> <span id="change-arrow" class="material-icons"></span></h1>
         </div>
         <div id="summary" class="tabcontent">
             <table>
@@ -41,13 +43,14 @@
                 <li><input name="date-range" type="radio" id="fifteen-days" value="15d"><label for="fifteen-days">15D</label></li>
                 <!--<li><label for="custom">Custom</label><input name="custom" type="radio" id="custom" value="custom"></li>-->
             </ul>
-            <canvas id="candle"></canvas>
+            <canvas id="candle-graph"></canvas>
         </div>
-        <div id="technical" class="tabcontent" hidden>
-            <p>Hello There</p>
+        <div id="technical-analysis" class="tabcontent" hidden>
+            <p>Technical Analysis coming soon...</p>
         </div>
-        <div id="news" class="tabcontent" hidden>
-            <p>Hello There</p>
+        <div id="recommendation-trends" class="tabcontent" hidden>
+            <p>Recommendation Trends coming soon...</p>
+            <canvas id="trend-graph"></canvas>
         </div>
         <script src="./bundle.js"></script>
     </body>
