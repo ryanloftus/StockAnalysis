@@ -1,16 +1,19 @@
 * {
-    /* background-color: #202020;
-    color: #0892d0; */
     box-sizing: border-box;
     font-size: 24px;
     font-family: 'Roboto', sans-serif;
     margin: 0;
 }
-#big-ticker {
+.large {
     font-size: 40px;
 }
+.material-icons{
+    display: inline-flex;
+    vertical-align: bottom;
+}
 #change-arrow {
-    font-size: 60px;
+    line-height: 30px;
+    font-size: 28px;
 }
 /* style top nav bar */
 #topnav {

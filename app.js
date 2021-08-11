@@ -6,17 +6,16 @@
 // TODO: separate code into modules
 
 const Chart = require('./node_modules/chart.js');
+const utils = require('./utils.js');
 
 const url = 'https://finnhub.io/api/v1/';
 const quoteParam = 'quote?symbol=';
 const candleParam = 'stock/candle?symbol=';
 const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
-const ticker = document.getElementById('ticker');
+const ticker = document.getElementById('input-ticker');
 const candleGraph = makeCandleGraph();
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
-
-const blankVal = '--';
 
 function makeCandleGraph() {
     return new Chart(document.getElementById('candle-graph'), {
@@ -32,38 +31,8 @@ function makeCandleGraph() {
     });
 }
 
-function getDateParams() {
-    const now = new Date();
-    let fromDate = new Date();
-    const dateRange = document.querySelector('input[name="date-range"]:checked').value;
-    const timeUnit = dateRange.slice(-1);
-    const timeAmount = dateRange.substring(0, dateRange.length - 1);
-    if (timeUnit === 'y') {
-        fromDate.setFullYear(now.getFullYear() - timeAmount);
-    } else if (timeUnit === 'm') {
-        fromDate.setMonth(now.getMonth() - timeAmount);
-    } else if (timeUnit === 'd') {
-        fromDate.setDate(now.getDate() - timeAmount);
-    } else {
-        fromDate = new Date(0);
-    }
-    return '&resolution=D' + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
-}
-
-function getReadableDates(dates) {
-    return dates.map(date => new Date(date * 1000).toDateString().slice(4));
-}
-
-function getDollarVal(val) {
-    return (val ? (Math.round(val * 100) / 100).toFixed(2) : blankVal);
-}
-
-function getPercentVal(val) {
-    return val ? val.toString() + '%' : blankVal;
-}
-
 function setQuoteVal(element, val, isInDollars, isChange) {
-    element.innerHTML = isInDollars ? getDollarVal(val) : getPercentVal(val);
+    element.innerHTML = isInDollars ? utils.getDollarVal(val) : utils.getPercentVal(val);
     if (isChange) {
         if (val > 0) {
             element.setAttribute('class', 'up');
@@ -96,33 +65,19 @@ function renderQuote(quote) {
 
 function renderCandle(candle) {
     if (candle.s === 'ok') {
-        candleGraph.data.labels = getReadableDates(candle.t);
+        candleGraph.data.labels = utils.getReadableDates(candle.t);
         candleGraph.data.datasets[0].data = candle.c;
         candleGraph.update();
-    }
-}
-
-async function getData(endpoint) {
-    try {
-        const response = await fetch(endpoint, {method: 'GET'});
-        if (response.ok) {
-            const jsonResponse = await response.json();
-            return jsonResponse;
-        } else {
-            throw new Error('Request failed');
-        }
-    }
-    catch (error) {
-        console.log(error);
     }
 }
 
 async function displayStockData() {
     if (ticker.value) {
         const capitalizedTicker = ticker.value.toUpperCase();
-        renderQuote(await getData(url + quoteParam + capitalizedTicker + apiKey));
-        renderCandle(await getData(url + candleParam + capitalizedTicker + getDateParams() + apiKey));
-        document.getElementById('big-ticker').innerHTML = capitalizedTicker;
+        renderQuote(await utils.getData(url + quoteParam + capitalizedTicker + apiKey));
+        renderCandle(await utils.getData(url + candleParam + capitalizedTicker + 
+            utils.getDateParams(document.querySelector('input[name="date-range"]:checked').value) + apiKey));
+        document.getElementById('display-ticker').innerHTML = capitalizedTicker;
     }
 }
 

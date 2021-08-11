@@ -1,23 +1,22 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // TODO: add loading screen for request processing?
-// TODO: add technical analysis + news and ratings tabs
+// TODO: add technical analysis + news and ratings tab content
 // TODO: make the candle graph smaller, maybe put it beside quote info.
 // TODO: display ticker in large letters followed by change and %change and the full name of the stock (ie F 0.34 2.34% Ford Motors)
 // TODO: add a link to a separate webpage "other securities" to find info on non-stock securities
 // TODO: separate code into modules
 
 const Chart = require('./node_modules/chart.js');
+const utils = require('./utils.js');
 
 const url = 'https://finnhub.io/api/v1/';
 const quoteParam = 'quote?symbol=';
 const candleParam = 'stock/candle?symbol=';
 const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
-const ticker = document.getElementById('ticker');
+const ticker = document.getElementById('input-ticker');
 const candleGraph = makeCandleGraph();
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
-
-const blankVal = '--';
 
 function makeCandleGraph() {
     return new Chart(document.getElementById('candle-graph'), {
@@ -33,38 +32,8 @@ function makeCandleGraph() {
     });
 }
 
-function getDateParams() {
-    const now = new Date();
-    let fromDate = new Date();
-    const dateRange = document.querySelector('input[name="date-range"]:checked').value;
-    const timeUnit = dateRange.slice(-1);
-    const timeAmount = dateRange.substring(0, dateRange.length - 1);
-    if (timeUnit === 'y') {
-        fromDate.setFullYear(now.getFullYear() - timeAmount);
-    } else if (timeUnit === 'm') {
-        fromDate.setMonth(now.getMonth() - timeAmount);
-    } else if (timeUnit === 'd') {
-        fromDate.setDate(now.getDate() - timeAmount);
-    } else {
-        fromDate = new Date(0);
-    }
-    return '&resolution=D' + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
-}
-
-function getReadableDates(dates) {
-    return dates.map(date => new Date(date * 1000).toDateString().slice(4));
-}
-
-function getDollarVal(val) {
-    return (val ? (Math.round(val * 100) / 100).toFixed(2) : blankVal);
-}
-
-function getPercentVal(val) {
-    return val ? val.toString() + '%' : blankVal;
-}
-
 function setQuoteVal(element, val, isInDollars, isChange) {
-    element.innerHTML = isInDollars ? getDollarVal(val) : getPercentVal(val);
+    element.innerHTML = isInDollars ? utils.getDollarVal(val) : utils.getPercentVal(val);
     if (isChange) {
         if (val > 0) {
             element.setAttribute('class', 'up');
@@ -97,33 +66,19 @@ function renderQuote(quote) {
 
 function renderCandle(candle) {
     if (candle.s === 'ok') {
-        candleGraph.data.labels = getReadableDates(candle.t);
+        candleGraph.data.labels = utils.getReadableDates(candle.t);
         candleGraph.data.datasets[0].data = candle.c;
         candleGraph.update();
-    }
-}
-
-async function getData(endpoint) {
-    try {
-        const response = await fetch(endpoint, {method: 'GET'});
-        if (response.ok) {
-            const jsonResponse = await response.json();
-            return jsonResponse;
-        } else {
-            throw new Error('Request failed');
-        }
-    }
-    catch (error) {
-        console.log(error);
     }
 }
 
 async function displayStockData() {
     if (ticker.value) {
         const capitalizedTicker = ticker.value.toUpperCase();
-        renderQuote(await getData(url + quoteParam + capitalizedTicker + apiKey));
-        renderCandle(await getData(url + candleParam + capitalizedTicker + getDateParams() + apiKey));
-        document.getElementById('big-ticker').innerHTML = capitalizedTicker;
+        renderQuote(await utils.getData(url + quoteParam + capitalizedTicker + apiKey));
+        renderCandle(await utils.getData(url + candleParam + capitalizedTicker + 
+            utils.getDateParams(document.querySelector('input[name="date-range"]:checked').value) + apiKey));
+        document.getElementById('display-ticker').innerHTML = capitalizedTicker;
     }
 }
 
@@ -146,7 +101,7 @@ ticker.onkeydown = event => {
 document.getElementById('search').onclick = displayStockData;
 tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
 document.getElementsByName('date-range').forEach(element => element.onchange = displayStockData);
-},{"./node_modules/chart.js":2}],2:[function(require,module,exports){
+},{"./node_modules/chart.js":2,"./utils.js":3}],2:[function(require,module,exports){
 /*!
  * Chart.js v3.5.0
  * https://www.chartjs.org
@@ -13350,4 +13305,50 @@ return Chart;
 
 })));
 
+},{}],3:[function(require,module,exports){
+const blankVal = '--';
+
+module.exports.getDateParams = function(dateRange) {
+    const now = new Date();
+    let fromDate = new Date();
+    const timeUnit = dateRange.slice(-1);
+    const timeAmount = dateRange.substring(0, dateRange.length - 1);
+    if (timeUnit === 'y') {
+        fromDate.setFullYear(now.getFullYear() - timeAmount);
+    } else if (timeUnit === 'm') {
+        fromDate.setMonth(now.getMonth() - timeAmount);
+    } else if (timeUnit === 'd') {
+        fromDate.setDate(now.getDate() - timeAmount);
+    } else {
+        fromDate = new Date(0);
+    }
+    return '&resolution=D' + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
+}
+
+module.exports.getReadableDates = function(dates) {
+    return dates.map(date => new Date(date * 1000).toDateString().slice(4));
+}
+
+module.exports.getDollarVal = function(val) {
+    return (val ? (Math.round(val * 100) / 100).toFixed(2) : blankVal);
+}
+
+module.exports.getPercentVal = function(val) {
+    return val ? `(${val}%)` : blankVal;
+}
+
+module.exports.getData = async function(endpoint) {
+    try {
+        const response = await fetch(endpoint, {method: 'GET'});
+        if (response.ok) {
+            const jsonResponse = await response.json();
+            return jsonResponse;
+        } else {
+            throw new Error('Request failed');
+        }
+    }
+    catch (error) {
+        console.log(error);
+    }
+}
 },{}]},{},[1]);
