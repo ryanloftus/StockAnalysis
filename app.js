@@ -1,9 +1,8 @@
-// TODO: add loading screen for request processing?
-// TODO: add technical analysis + news and ratings tab content
+// TODO: add technical analysis + recommendation trends tab content
 // TODO: make the candle graph smaller, maybe put it beside quote info.
-// TODO: display ticker in large letters followed by change and %change and the full name of the stock (ie F 0.34 2.34% Ford Motors)
-// TODO: add a link to a separate webpage "other securities" to find info on non-stock securities
+// TODO: add company name + market below ticker
 // TODO: separate code into modules
+// TODO: allow for conversion to CAD
 
 const Chart = require('./node_modules/chart.js');
 const utils = require('./utils.js');
@@ -61,6 +60,7 @@ function renderQuote(quote) {
     setQuoteVal(document.getElementById('low'), quote.l, true, false);
     setQuoteVal(document.getElementById('open'), quote.o, true, false);
     setQuoteVal(document.getElementById('close'), quote.pc, true, false);
+    document.getElementById('currency').innerHTML = 'USD'
 }
 
 function renderCandle(candle) {

@@ -7,7 +7,7 @@
 .large {
     font-size: 40px;
 }
-.material-icons{
+.material-icons {
     display: inline-flex;
     vertical-align: bottom;
 }
@@ -47,8 +47,6 @@
 /* style content tabs */
 .tab {
     overflow: hidden;
-    border: 1px solid #ccc;
-    background-color: #f1f1f1;
 }
 .tab button {
     background-color: inherit;

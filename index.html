@@ -12,17 +12,16 @@
                 <input id="input-ticker" type="text" name="ticker" placeholder="Search a ticker here.">
                 <button id="search" type="button" class="material-icons">search</button>
             </div>
+            <div class="tab">
+                <button class="tablinks active" value="summary">Summary</button>
+                <button class="tablinks" value="technical-analysis">Technical Analyis</button>
+                <button class="tablinks" value="recommendation-trends">Recommendation Trends</button>
+            </div>
         </nav>
-        <!-- Tab links -->
-        <div class="tab">
-            <button class="tablinks active" value="summary">Summary</button>
-            <button class="tablinks" value="technical-analysis">Technical Analyis</button>
-            <button class="tablinks" value="recommendation-trends">Recommendation Trends</button>
-        </div>
         <div id="summary" class="tabcontent">
             <div id="basic-info">
+                <strong><span id="current" class="large"></span></strong> <span id="currency"></span><br>
                 <strong>
-                    <span id="current" class="large"></span><!--<span id="currency"></span>--><br>
                     <span id="display-ticker"></span>
                     <span id="change-arrow" class="material-icons"></span>
                     <span id="change"></span>
