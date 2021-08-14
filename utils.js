@@ -21,8 +21,8 @@ module.exports.getReadableDates = function(dates) {
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 
-module.exports.getDollarVal = function(val) {
-    return (val ? (Math.round(val * 100) / 100).toFixed(2) : blankVal);
+module.exports.getDollarVal = function(usdVal, exchangeRate) {
+    return (usdVal ? (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2) : blankVal);
 }
 
 module.exports.getPercentVal = function(val) {
@@ -40,6 +40,7 @@ module.exports.getData = async function(endpoint) {
         }
     }
     catch (error) {
+        alert('Invalid Ticker');
         console.log(error);
     }
 }
