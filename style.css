@@ -15,6 +15,9 @@
     line-height: 30px;
     font-size: 28px;
 }
+#summary {
+    padding: 12px;
+}
 /* style top nav bar */
 #topnav {
     width: 100%;

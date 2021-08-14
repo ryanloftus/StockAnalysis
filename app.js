@@ -1,8 +1,8 @@
 // TODO: add technical analysis + recommendation trends tab content
-// TODO: make the candle graph smaller, maybe put it beside quote info.
+// TODO: add more quote info
+// TODO: make candle graph smaller
 // TODO: add company name + market below ticker
 // TODO: move urls to utils.js and have constants in utils for each data pull
-// TODO: include average volume info
 
 const Chart = require('./node_modules/chart.js');
 const utils = require('./utils.js');
@@ -23,14 +23,17 @@ async function getExchangeRates() {
 
 function makeCandleGraph() {
     return new Chart(document.getElementById('candle-graph'), {
-        type: 'line', 
         data: {
             labels: [], 
-            datasets: [{
-                label: 'Price',
-                data: [],
-                borderColor: 'rgb(10, 200, 0)'
-            }]
+            datasets: [{type: 'line', label: 'Price', yAxisID: 'p', data: [], borderColor: '#2779e6'}, 
+                {type: 'bar', label: 'Volume (thousands)', yAxisID: 'v', data: []}]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                p: {type: 'linear', position: 'left', title: {text: 'Price', display: true}},
+                v: {type: 'linear', position: 'right', title: {text: 'Volume (thousands)', display: true}, grid: {display: false}}
+            }
         }
     });
 }
@@ -72,6 +75,7 @@ function renderCandle(candle, exchangeRate) {
     if (candle.s === 'ok') {
         candleGraph.data.labels = utils.getReadableDates(candle.t);
         candleGraph.data.datasets[0].data = candle.c.map(val => utils.getDollarVal(val, exchangeRate));
+        candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
         candleGraph.update();
     }
 }

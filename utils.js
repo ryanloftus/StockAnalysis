@@ -40,7 +40,7 @@ module.exports.getData = async function(endpoint) {
         }
     }
     catch (error) {
-        alert('Invalid Ticker');
+        alert('Invalid: Try entering the symbol for an NYSE or NASDAQ traded stock');
         console.log(error);
     }
 }
