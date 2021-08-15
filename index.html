@@ -9,7 +9,7 @@
     <body>
         <nav id="topnav">
             <div id="search-bar">
-                <input id="input-ticker" type="text" name="ticker" placeholder="Search a ticker here."
+                <input id="input-ticker" type="text" name="ticker" placeholder="Search a US ticker."
                 ><button id="search" type="button" class="material-icons">search</button>
                 <button id="settings" class="material-icons">settings</button>
             </div>
@@ -27,8 +27,9 @@
         </div>
         <div class="tab">
             <button class="tablinks active" value="summary">Summary</button>
-            <button class="tablinks" value="technical-analysis">Technical Analyis</button>
+            <button class="tablinks" value="technical-analysis">Technical Analysis</button>
             <button class="tablinks" value="recommendation-trends">Recommendation Trends</button>
+            <button class="tablinks" value="news">News</button>
         </div>
         <div id="summary" class="tabcontent">
             <div id="basic-info">
@@ -63,8 +64,10 @@
             <p>Technical Analysis coming soon...</p>
         </div>
         <div id="recommendation-trends" class="tabcontent" hidden>
-            <p>Recommendation Trends coming soon...</p>
-            <canvas id="trend-graph"></canvas>
+            <canvas id="recommendation-graph"></canvas>
+        </div>
+        <div id="news" class="tabcontent" hidden>
+            <p>News coming soon...</p>
         </div>
         <script src="./bundle.js"></script>
     </body>

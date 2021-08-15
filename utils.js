@@ -1,6 +1,21 @@
 const blankVal = '--';
+const endpointBuilder = {
+    url: 'https://finnhub.io/api/v1/',
+    apiKey: '&token=c41hlviad3ies3kt3gmg',
+    param: {
+        quote: 'quote?symbol=',
+        candle: 'stock/candle?symbol=',
+        recommendations: 'stock/recommendation?symbol=',
+        forex: 'forex/rates?base=USD'
+    },
+    getEndpoint: function(paramKey, ticker) {
+        return this.url + this.param[paramKey] + (paramKey === 'forex' ? '' : ticker) + 
+            (paramKey === 'candle' ? getDateParams() : '') + this.apiKey;
+    }
+};
 
-module.exports.getDateParams = function(dateRange) {
+getDateParams = function() {
+    const dateRange = document.querySelector('input[name="date-range"]:checked').value;
     const now = new Date();
     let fromDate = new Date();
     const timeUnit = dateRange.slice(-1);
@@ -29,7 +44,8 @@ module.exports.getPercentVal = function(val) {
     return val ? `(${val}%)` : blankVal;
 }
 
-module.exports.getData = async function(endpoint) {
+module.exports.getData = async function(paramKey, ticker) {
+    const endpoint = endpointBuilder.getEndpoint(paramKey, ticker);
     try {
         const response = await fetch(endpoint, {method: 'GET'});
         if (response.ok) {
@@ -40,7 +56,6 @@ module.exports.getData = async function(endpoint) {
         }
     }
     catch (error) {
-        alert('Invalid: Try entering the symbol for an NYSE or NASDAQ traded stock');
         console.log(error);
     }
 }

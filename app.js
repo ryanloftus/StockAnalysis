@@ -1,8 +1,7 @@
-// TODO: add technical analysis + recommendation trends tab content
-// TODO: add more quote info
+// TODO: add technical analysis + news tab content
+// TODO: add prev. close as a horizontal line on the candle graph
 // TODO: make candle graph smaller
 // TODO: add company name + market below ticker
-// TODO: move urls to utils.js and have constants in utils for each data pull
 
 const Chart = require('./node_modules/chart.js');
 const utils = require('./utils.js');
@@ -10,30 +9,47 @@ const utils = require('./utils.js');
 const url = 'https://finnhub.io/api/v1/';
 const quoteParam = 'quote?symbol=';
 const candleParam = 'stock/candle?symbol=';
+const recommendationsParam = 'stock/recommendation?symbol=';
 const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
 const ticker = document.getElementById('input-ticker');
 const candleGraph = makeCandleGraph();
+const recommendationGraph = makeRecommendationGraph();
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
-
-async function getExchangeRates() {
-    const exchangeRates = await utils.getData(url + 'forex/rates?base=USD' + apiKey);
-    return exchangeRates.quote;
-}
 
 function makeCandleGraph() {
     return new Chart(document.getElementById('candle-graph'), {
         data: {
             labels: [], 
             datasets: [{type: 'line', label: 'Price', yAxisID: 'p', data: [], borderColor: '#2779e6'}, 
-                {type: 'bar', label: 'Volume (thousands)', yAxisID: 'v', data: []}]
+                       {type: 'bar', label: 'Volume (thousands)', yAxisID: 'v', data: []}]
         },
         options: {
             responsive: true,
             scales: {
                 p: {type: 'linear', position: 'left', title: {text: 'Price', display: true}},
                 v: {type: 'linear', position: 'right', title: {text: 'Volume (thousands)', display: true}, grid: {display: false}}
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
             }
+        }
+    });
+}
+
+function makeRecommendationGraph() {
+    return new Chart(document.getElementById('recommendation-graph'), {
+        type: 'bar',
+        data: {
+            labels: [], 
+            datasets: [{label: 'This Month', data: [], backgroundColor: '#2779e6'},
+                       {label: 'Last Month', data: [], backgroundColor: '#e99921'}]
+        },
+        options: {
+            responsive: true,
+            interaction: {intersect: false, mode: 'index'},
+            scales: {y: {beginAtZero: true, title: {text: '# of Analysts', display: true}}}
         }
     });
 }
@@ -80,17 +96,30 @@ function renderCandle(candle, exchangeRate) {
     }
 }
 
+function renderRecommendationTrends(recommendationTrends) {
+    const history = Math.min(recommendationTrends.length, 2);
+    recommendationGraph.data.labels = ['Strong Sell', 'Sell', 'Hold', 'Buy', 'Strong Buy'];
+    for (let i = 0; i < history; i++) {
+        const data = recommendationTrends[i];
+        recommendationGraph.data.datasets[i].data = [data.strongSell, data.sell, data.hold, data.buy, data.strongBuy];
+    }
+    recommendationGraph.update();
+}
+
 async function displayStockData() {
     if (ticker.value) {
         const capitalizedTicker = ticker.value.toUpperCase();
-        const exchangeRates = await getExchangeRates();
-        const quote = await utils.getData(url + quoteParam + capitalizedTicker + apiKey);
-        const candle = await utils.getData(url + candleParam + capitalizedTicker + 
-            utils.getDateParams(document.querySelector('input[name="date-range"]:checked').value) + apiKey);
-        const exchangeRate = exchangeRates[document.getElementById('currency').value];
-        renderQuote(quote, exchangeRate);
-        renderCandle(candle, exchangeRate);
-        document.getElementById('display-ticker').innerHTML = capitalizedTicker;
+        const exchangeRates = await utils.getData('forex', capitalizedTicker);
+        const quote = await utils.getData('quote', capitalizedTicker);
+        if (quote) {
+            const candle = await utils.getData('candle', capitalizedTicker);
+            const exchangeRate = exchangeRates.quote[document.getElementById('currency').value];
+            renderQuote(quote, exchangeRate);
+            renderCandle(candle, exchangeRate);
+            document.getElementById('display-ticker').innerHTML = capitalizedTicker;
+            const recommendationTrends = await utils.getData('recommendations', capitalizedTicker);
+            renderRecommendationTrends(recommendationTrends);
+        }
     }
 }
 
