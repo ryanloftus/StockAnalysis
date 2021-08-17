@@ -6,10 +6,11 @@ const endpointBuilder = {
         quote: 'quote?symbol=',
         candle: 'stock/candle?symbol=',
         recommendations: 'stock/recommendation?symbol=',
-        forex: 'forex/rates?base=USD'
+        forex: 'forex/rates?base=',
+        news: 'company-news?symbol='
     },
     getEndpoint: function(paramKey, ticker) {
-        return this.url + this.param[paramKey] + (paramKey === 'forex' ? '' : ticker) + 
+        return this.url + this.param[paramKey] + ticker + 
             (paramKey === 'candle' ? getDateParams() : '') + this.apiKey;
     }
 };

@@ -3,20 +3,16 @@
 // TODO: add prev. close as a horizontal line on the candle graph
 // TODO: make candle graph smaller
 // TODO: add company name + market below ticker
+// TODO: add messages for when there is no data to display (ie. (!) no recommendation trends available)
 
 const Chart = require('./node_modules/chart.js');
 const utils = require('./utils.js');
-
-const url = 'https://finnhub.io/api/v1/';
-const quoteParam = 'quote?symbol=';
-const candleParam = 'stock/candle?symbol=';
-const recommendationsParam = 'stock/recommendation?symbol=';
-const apiKey = '&token=c41hlviad3ies3kt3gmg';
 
 const ticker = document.getElementById('input-ticker');
 const candleGraph = makeCandleGraph();
 const recommendationGraph = makeRecommendationGraph();
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
+const forexData = utils.getData('forex', 'USD');
 
 function makeCandleGraph() {
     return new Chart(document.getElementById('candle-graph'), {
@@ -110,10 +106,10 @@ function renderRecommendationTrends(recommendationTrends) {
 async function displayStockData() {
     if (ticker.value) {
         const capitalizedTicker = ticker.value.toUpperCase();
-        const exchangeRates = await utils.getData('forex', capitalizedTicker);
         const quote = await utils.getData('quote', capitalizedTicker);
         if (quote) {
             const candle = await utils.getData('candle', capitalizedTicker);
+            const exchangeRates = await forexData;
             const exchangeRate = exchangeRates.quote[document.getElementById('currency').value];
             renderQuote(quote, exchangeRate);
             renderCandle(candle, exchangeRate);
@@ -13362,10 +13358,11 @@ const endpointBuilder = {
         quote: 'quote?symbol=',
         candle: 'stock/candle?symbol=',
         recommendations: 'stock/recommendation?symbol=',
-        forex: 'forex/rates?base=USD'
+        forex: 'forex/rates?base=',
+        news: 'company-news?symbol='
     },
     getEndpoint: function(paramKey, ticker) {
-        return this.url + this.param[paramKey] + (paramKey === 'forex' ? '' : ticker) + 
+        return this.url + this.param[paramKey] + ticker + 
             (paramKey === 'candle' ? getDateParams() : '') + this.apiKey;
     }
 };
