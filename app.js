@@ -1,12 +1,15 @@
 // TODO: add technical analysis + news tab content
-// TODO: add prev. close as a horizontal line on the candle graph
 // TODO: make candle graph smaller
 // TODO: add company name + market below ticker
 // TODO: add messages for when there is no data to display (ie. (!) no recommendation trends available)
 // TODO: fix bug where if user searches invalid ticker then a valid ticker right after, the data for the invalid ticker loads
 //       Once symbol lookup is added, check symbol lookup before doing anything. If it is invalid, do nothing.
+// TODO: add checklist to summary table to display the value on the graph as a horizontal line?
+// TODO: put all render functions in a module render.js
 
 const Chart = require('./node_modules/chart.js');
+const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
+Chart.register(annotationPlugin);
 const utils = require('./utils.js');
 
 const ticker = document.getElementById('input-ticker');
@@ -19,7 +22,7 @@ function makeCandleGraph() {
     return new Chart(document.getElementById('candle-graph'), {
         data: {
             labels: [], 
-            datasets: [{type: 'line', label: 'Price', yAxisID: 'p', data: [], borderColor: '#2779e6'}, 
+            datasets: [{type: 'line', label: 'Price', yAxisID: 'p', data: [], borderColor: '#2779e6', radius: 0}, 
                        {type: 'bar', label: 'Volume (thousands)', yAxisID: 'v', data: []}]
         },
         options: {
@@ -28,9 +31,22 @@ function makeCandleGraph() {
                 p: {type: 'linear', position: 'left', title: {text: 'Price', display: true}},
                 v: {type: 'linear', position: 'right', title: {text: 'Volume (thousands)', display: true}, grid: {display: false}}
             },
-            interaction: {
-                intersect: false,
-                mode: 'index'
+            interaction: {intersect: false, mode: 'index'},
+            plugins: {
+                annotation: {
+                    annotations: {
+                        close: {
+                            type: 'line',
+                            yScaleID: 'p',
+                            yMin: 0,
+                            yMax: 0,
+                            borderColor: '#ff6384',
+                            borderWidth: 2,
+                            borderDash: [6, 6],
+                            label: {enabled: true, content: 'Prev. Close', position: 'start'}
+                        }
+                    }
+                }
             }
         }
     });
@@ -63,7 +79,10 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
     }
 }
 
-function renderQuote(quote, exchangeRate) {
+function renderSummary(quote, candle, exchangeRate) {
+    if (candle.s !== 'ok') {
+        return;
+    }
     const arrow = document.getElementById('change-arrow');
     if (quote.d > 0) {
         arrow.className = 'material-icons up';
@@ -83,15 +102,12 @@ function renderQuote(quote, exchangeRate) {
     setQuoteVal(document.getElementById('open'), quote.o, exchangeRate, false);
     setQuoteVal(document.getElementById('close'), quote.pc, exchangeRate, false);
     document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
-}
-
-function renderCandle(candle, exchangeRate) {
-    if (candle.s === 'ok') {
-        candleGraph.data.labels = utils.getReadableDates(candle.t);
-        candleGraph.data.datasets[0].data = candle.c.map(val => utils.getDollarVal(val, exchangeRate));
-        candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
-        candleGraph.update();
-    }
+    candleGraph.data.labels = utils.getReadableDates(candle.t);
+    candleGraph.data.datasets[0].data = candle.c.map(val => utils.getDollarVal(val, exchangeRate));
+    candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
+    candleGraph.options.plugins.annotation.annotations['close'].yMin = quote.pc;
+    candleGraph.options.plugins.annotation.annotations['close'].yMax = quote.pc;
+    candleGraph.update();
 }
 
 function renderRecommendationTrends(recommendationTrends) {
@@ -111,9 +127,7 @@ async function displayStockData() {
         if (quote) {
             const candle = await utils.getData('candle', capitalizedTicker);
             const exchangeRates = await forexData;
-            const exchangeRate = exchangeRates.quote[document.getElementById('currency').value];
-            renderQuote(quote, exchangeRate);
-            renderCandle(candle, exchangeRate);
+            renderSummary(quote, candle, exchangeRates.quote[document.getElementById('currency').value]);
             document.getElementById('display-ticker').innerHTML = capitalizedTicker;
             const recommendationTrends = await utils.getData('recommendations', capitalizedTicker);
             renderRecommendationTrends(recommendationTrends);

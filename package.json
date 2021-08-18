@@ -5,7 +5,8 @@
   "main": "app.js",
   "dependencies": {
     "chart.js": "^3.5.0",
-	"utils.js": "file:./utils.js"
+    "chartjs-plugin-annotation": "^1.0.2",
+    "utils.js": "file:./utils.js"
   },
   "devDependencies": {},
   "scripts": {
