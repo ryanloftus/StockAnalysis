@@ -25,10 +25,11 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
     }
 }
 
-module.exports.renderSummary = function(profile, quote, candle, exchangeRate) {
+module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     if (candle.s !== 'ok') {
         return;
     }
+    document.getElementById('name').innerHTML = name;
     const arrow = document.getElementById('change-arrow');
     if (quote.d > 0) {
         arrow.className = 'material-icons up';

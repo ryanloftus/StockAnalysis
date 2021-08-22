@@ -4,6 +4,12 @@
     font-family: 'Roboto', sans-serif;
     margin: 0;
 }
+table {
+    margin: 12px;
+}
+th, td {
+    padding: 4px 10px;
+}
 .large {
     font-size: 40px;
 }
@@ -16,7 +22,7 @@
     font-size: 28px;
 }
 #summary {
-    padding: 12px;
+    margin: 12px;
 }
 /* style top nav bar */
 #topnav {

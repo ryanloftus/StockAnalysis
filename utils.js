@@ -2,7 +2,7 @@ const endpointBuilder = {
     url: 'https://finnhub.io/api/v1/',
     apiKey: '&token=c41hlviad3ies3kt3gmg',
     param: {
-        profile: 'stock/profile2?symbol=',
+        lookup: 'search?q=',
         quote: 'quote?symbol=',
         candle: 'stock/candle?symbol=',
         recommendations: 'stock/recommendation?symbol=',

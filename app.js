@@ -1,8 +1,7 @@
 // TODO: add technical analysis + news tab content
-// TODO: make candle graph smaller
-// TODO: add profile info to summary
 // TODO: add messages for when there is no data to display (ie. (!) no recommendation trends available)
 // TODO: add checklist to summary table to display the value on the graph as a horizontal line?
+// TODO: changing candle date range should only call the candle endpoint
 
 const Chart = require('./node_modules/chart.js');
 const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
@@ -10,22 +9,36 @@ Chart.register(annotationPlugin);
 const utils = require('./utils.js');
 const render = require('./render.js');
 
-const ticker = document.getElementById('input-ticker');
+const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
 const forexData = utils.getData('forex', 'USD');
 
+function getTicker() {
+    let ticker = tickerInput.value.toUpperCase();
+    if (ticker.endsWith('.US')) {
+        return ticker.slice(0, ticker.length - 3);
+    }
+    return ticker;
+}
+
 async function displayStockData() {
-    if (ticker.value) {
-        const capitalizedTicker = ticker.value.toUpperCase();
-        const profile = await utils.getData('profile', capitalizedTicker);
-        if (profile.name) {
+    if (tickerInput.value) {
+        const ticker = getTicker();
+        const lookup = await utils.getData('lookup', ticker);
+        let name;
+        for (let i = 0; i < lookup.count; i++) {
+            if (lookup.result[i].symbol === ticker) {
+                name = lookup.result[i].description;
+            }
+        }
+        if (name) {
             const exchangeRates = await forexData;
-            render.renderSummary(profile, await utils.getData('quote', capitalizedTicker), 
-                await utils.getData('candle', capitalizedTicker), exchangeRates.quote[document.getElementById('currency').value]);
-            render.renderRecommendationTrends(await utils.getData('recommendations', capitalizedTicker));
-            document.getElementById('display-ticker').innerHTML = capitalizedTicker;
+            render.renderSummary(name, await utils.getData('quote', ticker), 
+                await utils.getData('candle', ticker), exchangeRates.quote[document.getElementById('currency').value]);
+            render.renderRecommendationTrends(await utils.getData('recommendations', ticker));
+            document.getElementById('display-ticker').innerHTML = ticker;
         } else {
-            alert('Could not find a US stock with ticker: ' + capitalizedTicker);
+            alert('Could not find a US stock with ticker: ' + ticker);
         }
     }
 }
@@ -41,7 +54,7 @@ function changeTab(newTab) {
     document.getElementById(newTab.value).removeAttribute('hidden');
 }
 
-ticker.onkeydown = event => {
+tickerInput.onkeydown = event => {
     if (event.code === 'Enter') {
         displayStockData()
     }

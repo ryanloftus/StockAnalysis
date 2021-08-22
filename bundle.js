@@ -1,11 +1,8 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // TODO: add technical analysis + news tab content
-// TODO: make candle graph smaller
-// TODO: add company name + market below ticker
 // TODO: add messages for when there is no data to display (ie. (!) no recommendation trends available)
-// TODO: fix bug where if user searches invalid ticker then a valid ticker right after, the data for the invalid ticker loads
-//       Once symbol lookup is added, check symbol lookup before doing anything. If it is invalid, do nothing.
 // TODO: add checklist to summary table to display the value on the graph as a horizontal line?
+// TODO: changing candle date range should only call the candle endpoint
 
 const Chart = require('./node_modules/chart.js');
 const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
@@ -13,22 +10,36 @@ Chart.register(annotationPlugin);
 const utils = require('./utils.js');
 const render = require('./render.js');
 
-const ticker = document.getElementById('input-ticker');
+const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
 const forexData = utils.getData('forex', 'USD');
 
+function getTicker() {
+    let ticker = tickerInput.value.toUpperCase();
+    if (ticker.endsWith('.US')) {
+        return ticker.slice(0, ticker.length - 3);
+    }
+    return ticker;
+}
+
 async function displayStockData() {
-    if (ticker.value) {
-        const capitalizedTicker = ticker.value.toUpperCase();
-        const profile = await utils.getData('profile', capitalizedTicker);
-        if (profile.name) {
+    if (tickerInput.value) {
+        const ticker = getTicker();
+        const lookup = await utils.getData('lookup', ticker);
+        let name;
+        for (let i = 0; i < lookup.count; i++) {
+            if (lookup.result[i].symbol === ticker) {
+                name = lookup.result[i].description;
+            }
+        }
+        if (name) {
             const exchangeRates = await forexData;
-            render.renderSummary(profile, await utils.getData('quote', capitalizedTicker), 
-                await utils.getData('candle', capitalizedTicker), exchangeRates.quote[document.getElementById('currency').value]);
-            render.renderRecommendationTrends(await utils.getData('recommendations', capitalizedTicker));
-            document.getElementById('display-ticker').innerHTML = capitalizedTicker;
+            render.renderSummary(name, await utils.getData('quote', ticker), 
+                await utils.getData('candle', ticker), exchangeRates.quote[document.getElementById('currency').value]);
+            render.renderRecommendationTrends(await utils.getData('recommendations', ticker));
+            document.getElementById('display-ticker').innerHTML = ticker;
         } else {
-            alert('Could not find a US stock with ticker: ' + capitalizedTicker);
+            alert('Could not find a US stock with ticker: ' + ticker);
         }
     }
 }
@@ -44,7 +55,7 @@ function changeTab(newTab) {
     document.getElementById(newTab.value).removeAttribute('hidden');
 }
 
-ticker.onkeydown = event => {
+tickerInput.onkeydown = event => {
     if (event.code === 'Enter') {
         displayStockData()
     }
@@ -14398,10 +14409,11 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
     }
 }
 
-module.exports.renderSummary = function(profile, quote, candle, exchangeRate) {
+module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     if (candle.s !== 'ok') {
         return;
     }
+    document.getElementById('name').innerHTML = name;
     const arrow = document.getElementById('change-arrow');
     if (quote.d > 0) {
         arrow.className = 'material-icons up';
@@ -14493,7 +14505,7 @@ const endpointBuilder = {
     url: 'https://finnhub.io/api/v1/',
     apiKey: '&token=c41hlviad3ies3kt3gmg',
     param: {
-        profile: 'stock/profile2?symbol=',
+        lookup: 'search?q=',
         quote: 'quote?symbol=',
         candle: 'stock/candle?symbol=',
         recommendations: 'stock/recommendation?symbol=',
