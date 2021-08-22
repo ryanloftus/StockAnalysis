@@ -10,27 +10,33 @@ const endpointBuilder = {
         news: 'company-news?symbol='
     },
     getEndpoint: function(paramKey, ticker) {
-        return this.url + this.param[paramKey] + ticker + 
-            (paramKey === 'candle' ? getDateParams() : '') + this.apiKey;
+        return this.url + this.param[paramKey] + ticker + getDateParams(paramKey) + this.apiKey;
     }
 };
 
-getDateParams = function() {
-    const dateRange = document.querySelector('input[name="date-range"]:checked').value;
+getDateParams = function(paramKey) {
     const now = new Date();
     let fromDate = new Date();
-    const timeUnit = dateRange.slice(-1);
-    const timeAmount = dateRange.substring(0, dateRange.length - 1);
-    if (timeUnit === 'y') {
-        fromDate.setFullYear(now.getFullYear() - timeAmount);
-    } else if (timeUnit === 'm') {
-        fromDate.setMonth(now.getMonth() - timeAmount);
-    } else if (timeUnit === 'd') {
-        fromDate.setDate(now.getDate() - timeAmount);
+    if (paramKey === 'candle') {
+        const dateRange = document.querySelector('input[name="date-range"]:checked').value;
+        const timeUnit = dateRange.slice(-1);
+        const timeAmount = dateRange.substring(0, dateRange.length - 1);
+        if (timeUnit === 'y') {
+            fromDate.setFullYear(now.getFullYear() - timeAmount);
+        } else if (timeUnit === 'm') {
+            fromDate.setMonth(now.getMonth() - timeAmount);
+        } else if (timeUnit === 'd') {
+            fromDate.setDate(now.getDate() - timeAmount);
+        } else {
+            fromDate = new Date(0);
+        }
+        return '&resolution=D&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
+    } else if (paramKey === 'news') {
+        fromDate.setDate(now.getDate() - 7);
+        return '&from=' + fromDate.toISOString().slice(0, 10) + '&to=' + now.toISOString().slice(0, 10);
     } else {
-        fromDate = new Date(0);
+        return '';
     }
-    return '&resolution=D' + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
 }
 
 module.exports.getData = async function(paramKey, ticker) {

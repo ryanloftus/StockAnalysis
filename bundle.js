@@ -1,8 +1,9 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-// TODO: add technical analysis + news tab content
+// TODO: add technical analysis (maybe call a local python api for the data analysis?)
 // TODO: add messages for when there is no data to display (ie. (!) no recommendation trends available)
-// TODO: add checklist to summary table to display the value on the graph as a horizontal line?
-// TODO: changing candle date range should only call the candle endpoint
+// TODO: changing candle date range should only call the candle endpoint OR
+//       always call candle with max date range and adjust what is displayed according to what range is selected
+// TODO: adjust graph sizes to fit screen
 
 const Chart = require('./node_modules/chart.js');
 const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
@@ -14,17 +15,30 @@ const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
 const forexData = utils.getData('forex', 'USD');
 
-function getTicker() {
-    let ticker = tickerInput.value.toUpperCase();
+let ticker;
+
+function setTicker() {
+    ticker = tickerInput.value.toUpperCase();
     if (ticker.endsWith('.US')) {
-        return ticker.slice(0, ticker.length - 3);
+        ticker = ticker.slice(0, ticker.length - 3);
     }
-    return ticker;
+}
+
+async function displaySummary(name, exchangeRate) {
+    render.renderSummary(name, await utils.getData('quote', ticker), await utils.getData('candle', ticker), exchangeRate);
+}
+
+async function displayRecommendationTrends() {
+    render.renderRecommendationTrends(await utils.getData('recommendations', ticker));
+}
+
+async function displayNews() {
+    render.renderNews(await utils.getData('news', ticker));
 }
 
 async function displayStockData() {
-    if (tickerInput.value) {
-        const ticker = getTicker();
+    if (tickerInput.value && tickerInput.value !== ticker) {
+        setTicker();
         const lookup = await utils.getData('lookup', ticker);
         let name;
         for (let i = 0; i < lookup.count; i++) {
@@ -34,9 +48,9 @@ async function displayStockData() {
         }
         if (name) {
             const exchangeRates = await forexData;
-            render.renderSummary(name, await utils.getData('quote', ticker), 
-                await utils.getData('candle', ticker), exchangeRates.quote[document.getElementById('currency').value]);
-            render.renderRecommendationTrends(await utils.getData('recommendations', ticker));
+            displaySummary(name, exchangeRates.quote[document.getElementById('currency').value]);
+            displayRecommendationTrends()
+            displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else {
             alert('Could not find a US stock with ticker: ' + ticker);
@@ -14436,8 +14450,8 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     candleGraph.data.labels = getReadableDates(candle.t);
     candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
     candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
-    candleGraph.options.plugins.annotation.annotations['close'].yMin = quote.pc;
-    candleGraph.options.plugins.annotation.annotations['close'].yMax = quote.pc;
+    candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(quote.pc, exchangeRate);
+    candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(quote.pc, exchangeRate);
     candleGraph.update();
 }
 
@@ -14446,9 +14460,23 @@ module.exports.renderRecommendationTrends = function(recommendationTrends) {
     recommendationGraph.data.labels = ['Strong Sell', 'Sell', 'Hold', 'Buy', 'Strong Buy'];
     for (let i = 0; i < history; i++) {
         const data = recommendationTrends[i];
-        recommendationGraph.data.datasets[i].data = [data.strongSell, data.sell, data.hold, data.buy, data.strongBuy];
+        recommendationGraph.data.datasets[history - 1 - i].data = [data.strongSell, data.sell, data.hold, data.buy, data.strongBuy];
     }
     recommendationGraph.update();
+}
+
+module.exports.renderNews = function(news) {
+    const newsItems = document.getElementById('news-items');
+    newsItems.innerHTML = '';
+    const numOfNewsItems = Math.min(news.length, 10);
+    for (let i = 0; i < numOfNewsItems; i++) {
+        newsItems.innerHTML += 
+            `<a class="news-item" href="${news[i].url}" target="_blank">
+                <u>${news[i].headline}</u><br>
+                <span class="very-small">${new Date(news[i].datetime * 1000).toDateString()}</span><br>
+                <span class="small">${news[i].summary}</span>
+            </a><br>`;
+    }
 }
 
 function makeCandleGraph() {
@@ -14490,8 +14518,8 @@ function makeRecommendationGraph() {
         type: 'bar',
         data: {
             labels: [], 
-            datasets: [{label: 'This Month', data: [], backgroundColor: '#2779e6'},
-                       {label: 'Last Month', data: [], backgroundColor: '#e99921'}]
+            datasets: [{label: 'Last Month', data: [], backgroundColor: '#e99921'},
+                       {label: 'This Month', data: [], backgroundColor: '#2779e6'}]
         },
         options: {
             responsive: true,
@@ -14513,27 +14541,33 @@ const endpointBuilder = {
         news: 'company-news?symbol='
     },
     getEndpoint: function(paramKey, ticker) {
-        return this.url + this.param[paramKey] + ticker + 
-            (paramKey === 'candle' ? getDateParams() : '') + this.apiKey;
+        return this.url + this.param[paramKey] + ticker + getDateParams(paramKey) + this.apiKey;
     }
 };
 
-getDateParams = function() {
-    const dateRange = document.querySelector('input[name="date-range"]:checked').value;
+getDateParams = function(paramKey) {
     const now = new Date();
     let fromDate = new Date();
-    const timeUnit = dateRange.slice(-1);
-    const timeAmount = dateRange.substring(0, dateRange.length - 1);
-    if (timeUnit === 'y') {
-        fromDate.setFullYear(now.getFullYear() - timeAmount);
-    } else if (timeUnit === 'm') {
-        fromDate.setMonth(now.getMonth() - timeAmount);
-    } else if (timeUnit === 'd') {
-        fromDate.setDate(now.getDate() - timeAmount);
+    if (paramKey === 'candle') {
+        const dateRange = document.querySelector('input[name="date-range"]:checked').value;
+        const timeUnit = dateRange.slice(-1);
+        const timeAmount = dateRange.substring(0, dateRange.length - 1);
+        if (timeUnit === 'y') {
+            fromDate.setFullYear(now.getFullYear() - timeAmount);
+        } else if (timeUnit === 'm') {
+            fromDate.setMonth(now.getMonth() - timeAmount);
+        } else if (timeUnit === 'd') {
+            fromDate.setDate(now.getDate() - timeAmount);
+        } else {
+            fromDate = new Date(0);
+        }
+        return '&resolution=D&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
+    } else if (paramKey === 'news') {
+        fromDate.setDate(now.getDate() - 7);
+        return '&from=' + fromDate.toISOString().slice(0, 10) + '&to=' + now.toISOString().slice(0, 10);
     } else {
-        fromDate = new Date(0);
+        return '';
     }
-    return '&resolution=D' + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
 }
 
 module.exports.getData = async function(paramKey, ticker) {

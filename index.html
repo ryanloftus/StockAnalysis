@@ -23,6 +23,8 @@
                     <option value="CAD">CAD</option>
                     <option value="EUR">EUR</option>
                 </select>
+                <p class="very-small">All dollar values will be converted using the current exchange rate.<br>
+                   Refresh the page to update to the latest exchage rate.</p>
             </div>
         </div>
         <div class="tab">
@@ -55,7 +57,6 @@
                 <li><input name="date-range" type="radio" id="three-months" value="3m"><label for="three-months">3M</label></li>
                 <li><input name="date-range" type="radio" id="one-month" value="1m"><label for="one-month">1M</label></li>
                 <li><input name="date-range" type="radio" id="fifteen-days" value="15d"><label for="fifteen-days">15D</label></li>
-                <!--<li><label for="custom">Custom</label><input name="custom" type="radio" id="custom" value="custom"></li>-->
             </ul>
             <canvas id="candle-graph"></canvas>
         </div>
@@ -65,7 +66,10 @@
         <div id="recommendation-trends" class="tabcontent" hidden>
             <canvas id="recommendation-graph"></canvas>
         </div>
-        <div id="news" class="tabcontent" hidden></div>
+        <section id="news" class="tabcontent" hidden>
+            <h1 class="large">Company News</h1>
+            <div id="news-items"></div>
+        </section>
         <script src="./bundle.js"></script>
     </body>
 </html>
