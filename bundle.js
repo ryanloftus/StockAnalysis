@@ -1,13 +1,6 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // TODO: add technical analysis (maybe call a local python api for the data analysis?)
-// TODO: add messages for when there is no data to display (ie. (!) no recommendation trends available)
-// TODO: changing candle date range should only call the candle endpoint OR
-//       always call candle with max date range and adjust what is displayed according to what range is selected
-// TODO: adjust graph sizes to fit screen
 
-const Chart = require('./node_modules/chart.js');
-const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
-Chart.register(annotationPlugin);
 const utils = require('./utils.js');
 const render = require('./render.js');
 
@@ -17,11 +10,16 @@ const forexData = utils.getData('forex', 'USD');
 
 let ticker;
 
-function setTicker() {
-    ticker = tickerInput.value.toUpperCase();
-    if (ticker.endsWith('.US')) {
-        ticker = ticker.slice(0, ticker.length - 3);
+function setTicker(newTicker) {
+    ticker = newTicker;
+}
+
+function getTicker() {
+    newTicker = tickerInput.value.toUpperCase();
+    if (newTicker.endsWith('.US')) {
+        newTicker = newTicker.slice(0, newTicker.length - 3);
     }
+    return newTicker;
 }
 
 async function displaySummary(name, exchangeRate) {
@@ -36,18 +34,25 @@ async function displayNews() {
     render.renderNews(await utils.getData('news', ticker));
 }
 
-async function displayStockData() {
-    if (tickerInput.value && tickerInput.value !== ticker) {
-        setTicker();
-        const lookup = await utils.getData('lookup', ticker);
+async function displayStockData(isCandleOnly) {
+    const exchangeRates = await forexData;
+    if (isCandleOnly) {
+        render.setCandle(await utils.getData('candle', ticker), document.getElementById('close').innerHTML, 
+            exchangeRates.quote[document.getElementById('currency').value]);
+    } else if (tickerInput.value) {
+        const newTicker = getTicker();
+        if (newTicker === ticker) {
+            return;
+        }
+        const lookup = await utils.getData('lookup', newTicker);
         let name;
         for (let i = 0; i < lookup.count; i++) {
-            if (lookup.result[i].symbol === ticker) {
+            if (lookup.result[i].symbol === newTicker) {
                 name = lookup.result[i].description;
             }
         }
         if (name) {
-            const exchangeRates = await forexData;
+            setTicker(newTicker);
             displaySummary(name, exchangeRates.quote[document.getElementById('currency').value]);
             displayRecommendationTrends()
             displayNews();
@@ -71,19 +76,19 @@ function changeTab(newTab) {
 
 tickerInput.onkeydown = event => {
     if (event.code === 'Enter') {
-        displayStockData()
+        displayStockData(false)
     }
 };
-document.getElementById('search').onclick = displayStockData;
+document.getElementById('search').onclick = () => displayStockData(false);
 tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
-document.getElementsByName('date-range').forEach(element => element.onchange = displayStockData);
+document.getElementsByName('date-range').forEach(element => element.onchange = () => displayStockData(true));
 document.getElementById('settings').onclick = function() {
     document.getElementById('settings-window').removeAttribute('hidden');
 };
 document.getElementById('close-settings').onclick = function () {
     document.getElementById('settings-window').setAttribute('hidden', 'hidden');
 };
-},{"./node_modules/chart.js":2,"./node_modules/chartjs-plugin-annotation":4,"./render.js":5,"./utils.js":6}],2:[function(require,module,exports){
+},{"./render.js":5,"./utils.js":6}],2:[function(require,module,exports){
 /*!
  * Chart.js v3.5.0
  * https://www.chartjs.org
@@ -14396,6 +14401,10 @@ return Annotation;
 })));
 
 },{"chart.js":2,"chart.js/helpers":3}],5:[function(require,module,exports){
+const Chart = require('./node_modules/chart.js');
+const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
+Chart.register(annotationPlugin);
+
 const candleGraph = makeCandleGraph();
 const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
@@ -14423,6 +14432,15 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
     }
 }
 
+module.exports.setCandle = function(candle, close, exchangeRate) {
+    candleGraph.data.labels = getReadableDates(candle.t);
+    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
+    candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
+    candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(close, exchangeRate);
+    candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(close, exchangeRate);
+    candleGraph.update();
+}
+
 module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     if (candle.s !== 'ok') {
         return;
@@ -14446,18 +14464,15 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     setQuoteVal(document.getElementById('low'), quote.l, exchangeRate, false);
     setQuoteVal(document.getElementById('open'), quote.o, exchangeRate, false);
     setQuoteVal(document.getElementById('close'), quote.pc, exchangeRate, false);
+    this.setCandle(candle, quote.pc, exchangeRate);
     document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
-    candleGraph.data.labels = getReadableDates(candle.t);
-    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
-    candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
-    candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(quote.pc, exchangeRate);
-    candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(quote.pc, exchangeRate);
-    candleGraph.update();
 }
 
 module.exports.renderRecommendationTrends = function(recommendationTrends) {
+    for (let i = 0; i < recommendationGraph.data.datasets.length; i++) {
+        recommendationGraph.data.datasets[i].data = [0, 0, 0, 0, 0];
+    }
     const history = Math.min(recommendationTrends.length, 2);
-    recommendationGraph.data.labels = ['Strong Sell', 'Sell', 'Hold', 'Buy', 'Strong Buy'];
     for (let i = 0; i < history; i++) {
         const data = recommendationTrends[i];
         recommendationGraph.data.datasets[history - 1 - i].data = [data.strongSell, data.sell, data.hold, data.buy, data.strongBuy];
@@ -14488,6 +14503,7 @@ function makeCandleGraph() {
         },
         options: {
             responsive: true,
+            aspectRatio: 2.5,
             scales: {
                 p: {type: 'linear', position: 'left', title: {text: 'Price', display: true}},
                 v: {type: 'linear', position: 'right', title: {text: 'Volume (thousands)', display: true}, grid: {display: false}}
@@ -14517,18 +14533,19 @@ function makeRecommendationGraph() {
     return new Chart(document.getElementById('recommendation-graph'), {
         type: 'bar',
         data: {
-            labels: [], 
-            datasets: [{label: 'Last Month', data: [], backgroundColor: '#e99921'},
-                       {label: 'This Month', data: [], backgroundColor: '#2779e6'}]
+            labels: ['Strong Sell', 'Sell', 'Hold', 'Buy', 'Strong Buy'], 
+            datasets: [{label: 'Last Month', data: [0, 0, 0, 0, 0], backgroundColor: '#e99921'},
+                       {label: 'This Month', data: [0, 0, 0, 0, 0], backgroundColor: '#2779e6'}]
         },
         options: {
             responsive: true,
+            aspectRatio: 2.5,
             interaction: {intersect: false, mode: 'index'},
             scales: {y: {beginAtZero: true, title: {text: '# of Analysts', display: true}}}
         }
     });
 }
-},{}],6:[function(require,module,exports){
+},{"./node_modules/chart.js":2,"./node_modules/chartjs-plugin-annotation":4}],6:[function(require,module,exports){
 const endpointBuilder = {
     url: 'https://finnhub.io/api/v1/',
     apiKey: '&token=c41hlviad3ies3kt3gmg',

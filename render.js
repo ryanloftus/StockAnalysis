@@ -1,3 +1,7 @@
+const Chart = require('./node_modules/chart.js');
+const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
+Chart.register(annotationPlugin);
+
 const candleGraph = makeCandleGraph();
 const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
@@ -25,6 +29,15 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
     }
 }
 
+module.exports.setCandle = function(candle, close, exchangeRate) {
+    candleGraph.data.labels = getReadableDates(candle.t);
+    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
+    candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
+    candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(close, exchangeRate);
+    candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(close, exchangeRate);
+    candleGraph.update();
+}
+
 module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     if (candle.s !== 'ok') {
         return;
@@ -48,18 +61,15 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     setQuoteVal(document.getElementById('low'), quote.l, exchangeRate, false);
     setQuoteVal(document.getElementById('open'), quote.o, exchangeRate, false);
     setQuoteVal(document.getElementById('close'), quote.pc, exchangeRate, false);
+    this.setCandle(candle, quote.pc, exchangeRate);
     document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
-    candleGraph.data.labels = getReadableDates(candle.t);
-    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
-    candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
-    candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(quote.pc, exchangeRate);
-    candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(quote.pc, exchangeRate);
-    candleGraph.update();
 }
 
 module.exports.renderRecommendationTrends = function(recommendationTrends) {
+    for (let i = 0; i < recommendationGraph.data.datasets.length; i++) {
+        recommendationGraph.data.datasets[i].data = [0, 0, 0, 0, 0];
+    }
     const history = Math.min(recommendationTrends.length, 2);
-    recommendationGraph.data.labels = ['Strong Sell', 'Sell', 'Hold', 'Buy', 'Strong Buy'];
     for (let i = 0; i < history; i++) {
         const data = recommendationTrends[i];
         recommendationGraph.data.datasets[history - 1 - i].data = [data.strongSell, data.sell, data.hold, data.buy, data.strongBuy];
@@ -90,6 +100,7 @@ function makeCandleGraph() {
         },
         options: {
             responsive: true,
+            aspectRatio: 2.5,
             scales: {
                 p: {type: 'linear', position: 'left', title: {text: 'Price', display: true}},
                 v: {type: 'linear', position: 'right', title: {text: 'Volume (thousands)', display: true}, grid: {display: false}}
@@ -119,12 +130,13 @@ function makeRecommendationGraph() {
     return new Chart(document.getElementById('recommendation-graph'), {
         type: 'bar',
         data: {
-            labels: [], 
-            datasets: [{label: 'Last Month', data: [], backgroundColor: '#e99921'},
-                       {label: 'This Month', data: [], backgroundColor: '#2779e6'}]
+            labels: ['Strong Sell', 'Sell', 'Hold', 'Buy', 'Strong Buy'], 
+            datasets: [{label: 'Last Month', data: [0, 0, 0, 0, 0], backgroundColor: '#e99921'},
+                       {label: 'This Month', data: [0, 0, 0, 0, 0], backgroundColor: '#2779e6'}]
         },
         options: {
             responsive: true,
+            aspectRatio: 2.5,
             interaction: {intersect: false, mode: 'index'},
             scales: {y: {beginAtZero: true, title: {text: '# of Analysts', display: true}}}
         }

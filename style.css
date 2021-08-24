@@ -31,7 +31,7 @@ th, td {
     line-height: 30px;
     font-size: 28px;
 }
-#summary {
+.tabcontent {
     margin: 12px;
 }
 .news-item {
@@ -42,6 +42,7 @@ th, td {
     border: 2px solid #999;
     text-decoration: none;
     color: black;
+    background-color: #f8f8f8;
 }
 .news-item:hover {
     border: 2px solid black;
