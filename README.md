@@ -8,7 +8,8 @@ news for the searched stock/ETF.
 ## Download Instructions
 To get started using the Stock Analysis webpage:
 - Download bundle.js, index.html, and style.css into the same directory
-- Or, download the entire project
+- Or, download the entire repository
+
 Once the files are downloaded, open index.html to start using the webpage.
 
 ## Technologies Used
