@@ -5,6 +5,10 @@ This webpage provides a tool for searching US exchange traded stocks and funds
 (ETFs) and displays a summary, technical analysis, recommendation trends, and 
 news for the searched stock/ETF.
 
+## Visit the webpage
+To visit the webpage, go to https://ryanloftus.github.io/StockAnalysis/ or
+follow the Download Instructions.
+
 ## Download Instructions
 To get started using the Stock Analysis webpage:
 - Download bundle.js, index.html, and style.css into the same directory
