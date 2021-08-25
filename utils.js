@@ -21,16 +21,22 @@ getDateParams = function(paramKey) {
         const dateRange = document.querySelector('input[name="date-range"]:checked').value;
         const timeUnit = dateRange.slice(-1);
         const timeAmount = dateRange.substring(0, dateRange.length - 1);
+        let resolution = 'D';
         if (timeUnit === 'y') {
             fromDate.setFullYear(now.getFullYear() - timeAmount);
+            if (timeAmount > 1) {
+                resolution = 'W';
+            }
         } else if (timeUnit === 'm') {
             fromDate.setMonth(now.getMonth() - timeAmount);
         } else if (timeUnit === 'd') {
             fromDate.setDate(now.getDate() - timeAmount);
+            resolution = 30;
         } else {
             fromDate = new Date(0);
+            resolution = 'W';
         }
-        return '&resolution=D&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
+        return '&resolution=' + resolution + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
     } else if (paramKey === 'news') {
         fromDate.setDate(now.getDate() - 7);
         return '&from=' + fromDate.toISOString().slice(0, 10) + '&to=' + now.toISOString().slice(0, 10);

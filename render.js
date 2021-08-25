@@ -7,6 +7,10 @@ const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
 
 function getReadableDates(dates) {
+    // include time in date if dates are less than 12 hours apart
+    if (dates[1] - dates[0] < 60 * 60 * 12) {
+        return dates.map(date => new Date(date * 1000).toUTCString().slice(4));
+    }
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 

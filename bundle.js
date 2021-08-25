@@ -8,6 +8,10 @@ const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
 const forexData = utils.getData('forex', 'USD');
 
+const DISPLAY_ALL = 0;
+const DISPLAY_CANDLE = 1;
+const DISPLAY_NOMINAL = 2;
+
 let ticker;
 
 function setTicker(newTicker) {
@@ -34,11 +38,13 @@ async function displayNews() {
     render.renderNews(await utils.getData('news', ticker));
 }
 
-async function displayStockData(isCandleOnly) {
+async function displayStockData(display) {
     const exchangeRates = await forexData;
-    if (isCandleOnly) {
+    if (display === DISPLAY_CANDLE) {
         render.setCandle(await utils.getData('candle', ticker), document.getElementById('close').innerHTML, 
             exchangeRates.quote[document.getElementById('currency').value]);
+    } else if (display === DISPLAY_NOMINAL) {
+        displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
         const newTicker = getTicker();
         if (newTicker === ticker) {
@@ -58,7 +64,7 @@ async function displayStockData(isCandleOnly) {
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else {
-            alert('Could not find a US stock with ticker: ' + ticker);
+            alert('Could not find a US stock with ticker: ' + newTicker);
         }
     }
 }
@@ -76,17 +82,20 @@ function changeTab(newTab) {
 
 tickerInput.onkeydown = event => {
     if (event.code === 'Enter') {
-        displayStockData(false)
+        displayStockData(DISPLAY_ALL)
     }
 };
-document.getElementById('search').onclick = () => displayStockData(false);
+document.getElementById('search').onclick = () => displayStockData(DISPLAY_ALL);
 tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
-document.getElementsByName('date-range').forEach(element => element.onchange = () => displayStockData(true));
+document.getElementsByName('date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_CANDLE));
+
+// open and close the settings window
 document.getElementById('settings').onclick = function() {
     document.getElementById('settings-window').removeAttribute('hidden');
 };
 document.getElementById('close-settings').onclick = function () {
     document.getElementById('settings-window').setAttribute('hidden', 'hidden');
+    displayStockData(DISPLAY_NOMINAL);
 };
 },{"./render.js":5,"./utils.js":6}],2:[function(require,module,exports){
 /*!
@@ -14410,6 +14419,10 @@ const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
 
 function getReadableDates(dates) {
+    // include time in date if dates are less than 12 hours apart
+    if (dates[1] - dates[0] < 60 * 60 * 12) {
+        return dates.map(date => new Date(date * 1000).toUTCString().slice(4));
+    }
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 
@@ -14569,16 +14582,22 @@ getDateParams = function(paramKey) {
         const dateRange = document.querySelector('input[name="date-range"]:checked').value;
         const timeUnit = dateRange.slice(-1);
         const timeAmount = dateRange.substring(0, dateRange.length - 1);
+        let resolution = 'D';
         if (timeUnit === 'y') {
             fromDate.setFullYear(now.getFullYear() - timeAmount);
+            if (timeAmount > 1) {
+                resolution = 'W';
+            }
         } else if (timeUnit === 'm') {
             fromDate.setMonth(now.getMonth() - timeAmount);
         } else if (timeUnit === 'd') {
             fromDate.setDate(now.getDate() - timeAmount);
+            resolution = 30;
         } else {
             fromDate = new Date(0);
+            resolution = 'W';
         }
-        return '&resolution=D&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
+        return '&resolution=' + resolution + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
     } else if (paramKey === 'news') {
         fromDate.setDate(now.getDate() - 7);
         return '&from=' + fromDate.toISOString().slice(0, 10) + '&to=' + now.toISOString().slice(0, 10);
