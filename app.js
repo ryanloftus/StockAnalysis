@@ -1,4 +1,4 @@
-// TODO: add technical analysis (maybe call a local python api for the data analysis?)
+// TODO: add technical analysis
 
 const utils = require('./utils.js');
 const render = require('./render.js');

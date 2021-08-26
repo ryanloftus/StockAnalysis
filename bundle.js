@@ -14421,7 +14421,12 @@ const blankVal = '--';
 function getReadableDates(dates) {
     // include time in date if dates are less than 12 hours apart
     if (dates[1] - dates[0] < 60 * 60 * 12) {
-        return dates.map(date => new Date(date * 1000).toUTCString().slice(4));
+        const options = {weekday: 'short', year: '2-digit', month: 'short', day: 'numeric'};
+        return dates.map(date => {
+            const jsDate = new Date(date * 1000)
+            const dateString = jsDate.toLocaleDateString(undefined, options)
+            return dateString.slice(0, dateString.length - 2) + jsDate.toLocaleTimeString();
+        });
     }
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
@@ -14519,7 +14524,13 @@ function makeCandleGraph() {
             aspectRatio: 2.5,
             scales: {
                 p: {type: 'linear', position: 'left', title: {text: 'Price', display: true}},
-                v: {type: 'linear', position: 'right', title: {text: 'Volume (thousands)', display: true}, grid: {display: false}}
+                v: {type: 'linear', position: 'right', title: {text: 'Volume (thousands)', display: true}, grid: {display: false}},
+                x: {
+                    ticks: {
+                        autoSkip: true,
+                        maxTicksLimit: 40
+                    }
+                }
             },
             interaction: {intersect: false, mode: 'index'},
             plugins: {
