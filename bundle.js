@@ -1,5 +1,5 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-// TODO: add technical analysis (maybe call a local python api for the data analysis?)
+// TODO: add technical analysis
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -46,6 +46,7 @@ async function displayStockData(display) {
     } else if (display === DISPLAY_NOMINAL) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
+        render.toggleLoader();
         const newTicker = getTicker();
         if (newTicker === ticker) {
             return;
@@ -66,6 +67,7 @@ async function displayStockData(display) {
         } else {
             alert('Could not find a US stock with ticker: ' + newTicker);
         }
+        render.toggleLoader();
     }
 }
 
@@ -14417,6 +14419,18 @@ Chart.register(annotationPlugin);
 const candleGraph = makeCandleGraph();
 const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
+
+module.exports.toggleLoader = function() {
+    const loader = document.getElementById('loader');
+    const pageContent = document.getElementById('page-content');
+    if (loader.hasAttribute('hidden')) {
+        loader.removeAttribute('hidden');
+        pageContent.setAttribute('hidden', 'hidden');
+    } else {
+        loader.setAttribute('hidden', 'hidden');
+        pageContent.removeAttribute('hidden');
+    }
+}
 
 function getReadableDates(dates) {
     // include time in date if dates are less than 12 hours apart

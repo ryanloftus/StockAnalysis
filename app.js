@@ -45,6 +45,7 @@ async function displayStockData(display) {
     } else if (display === DISPLAY_NOMINAL) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
+        render.toggleLoader();
         const newTicker = getTicker();
         if (newTicker === ticker) {
             return;
@@ -65,6 +66,7 @@ async function displayStockData(display) {
         } else {
             alert('Could not find a US stock with ticker: ' + newTicker);
         }
+        render.toggleLoader();
     }
 }
 

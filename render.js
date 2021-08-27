@@ -6,6 +6,18 @@ const candleGraph = makeCandleGraph();
 const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
 
+module.exports.toggleLoader = function() {
+    const loader = document.getElementById('loader');
+    const pageContent = document.getElementById('page-content');
+    if (loader.hasAttribute('hidden')) {
+        loader.removeAttribute('hidden');
+        pageContent.setAttribute('hidden', 'hidden');
+    } else {
+        loader.setAttribute('hidden', 'hidden');
+        pageContent.removeAttribute('hidden');
+    }
+}
+
 function getReadableDates(dates) {
     // include time in date if dates are less than 12 hours apart
     if (dates[1] - dates[0] < 60 * 60 * 12) {
