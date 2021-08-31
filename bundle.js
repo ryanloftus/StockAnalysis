@@ -1,5 +1,9 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // TODO: add technical analysis
+//   - Relative Strength Analysis: include a graph showing the price of the security divided by the price of S&P 500/NASDAQ 100/DJIA
+//   - moving averages (60 day, 20 day, Bollinger Bands, golden/death cross)
+//   - momentum oscillator
+// TODO: log scale option for candle graph
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -22,6 +26,8 @@ function getTicker() {
     newTicker = tickerInput.value.toUpperCase();
     if (newTicker.endsWith('.US')) {
         newTicker = newTicker.slice(0, newTicker.length - 3);
+    } else if (newTicker.includes('.')) {
+        newTicker = null;
     }
     return newTicker;
 }
@@ -40,15 +46,15 @@ async function displayNews() {
 
 async function displayStockData(display) {
     const exchangeRates = await forexData;
-    if (display === DISPLAY_CANDLE) {
+    if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData('candle', ticker), document.getElementById('close').innerHTML, 
             exchangeRates.quote[document.getElementById('currency').value]);
-    } else if (display === DISPLAY_NOMINAL) {
+    } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
-        if (newTicker === ticker) {
+        if (newTicker && newTicker === ticker) {
             return;
         }
         const lookup = await utils.getData('lookup', newTicker);
@@ -64,8 +70,10 @@ async function displayStockData(display) {
             displayRecommendationTrends()
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
-        } else {
+        } else if (newTicker) {
             alert('Could not find a US stock with ticker: ' + newTicker);
+        } else {
+            alert('Request failed. Try entering a US stock or ETF ticker symbol.');
         }
         render.toggleLoader();
     }
@@ -90,6 +98,7 @@ tickerInput.onkeydown = event => {
 document.getElementById('search').onclick = () => displayStockData(DISPLAY_ALL);
 tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
 document.getElementsByName('date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_CANDLE));
+document.getElementById('log-scale-toggle').onclick = event => render.toggleLogScale(event.currentTarget);
 
 // open and close the settings window
 document.getElementById('settings').onclick = function() {
@@ -14432,6 +14441,20 @@ module.exports.toggleLoader = function() {
     }
 }
 
+module.exports.toggleLogScale = function(element) {
+    let prevData = candleGraph.data.datasets[0].data;
+    if (document.getElementById('log-scale-toggle').className !== 'active') {
+        candleGraph.data.datasets[0].data = prevData.map(data => Math.log(data));
+        candleGraph.options.plugins.annotation.annotations['close'].display = false;
+        element.className = 'active';
+    } else {
+        candleGraph.data.datasets[0].data = prevData.map(data => Math.exp(data));
+        candleGraph.options.plugins.annotation.annotations['close'].display = true;
+        element.className = '';
+    }
+    candleGraph.update();
+}
+
 function getReadableDates(dates) {
     // include time in date if dates are less than 12 hours apart
     if (dates[1] - dates[0] < 60 * 60 * 12) {
@@ -14445,7 +14468,10 @@ function getReadableDates(dates) {
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 
-function getDollarVal(usdVal, exchangeRate) {
+function getDollarVal(usdVal, exchangeRate, logScale = false) {
+    if (logScale) {
+        return (usdVal ? Math.log(usdVal * exchangeRate) : blankVal);
+    }
     return (usdVal ? (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2) : blankVal);
 }
 
@@ -14466,7 +14492,8 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
 
 module.exports.setCandle = function(candle, close, exchangeRate) {
     candleGraph.data.labels = getReadableDates(candle.t);
-    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
+    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate, 
+        document.getElementById('log-scale-toggle').className === 'active' ? true : false));
     candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
     candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(close, exchangeRate);
     candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(close, exchangeRate);
@@ -14513,7 +14540,7 @@ module.exports.renderRecommendationTrends = function(recommendationTrends) {
 }
 
 module.exports.renderNews = function(news) {
-    const newsItems = document.getElementById('news-items');
+    const newsItems = document.getElementById('news');
     newsItems.innerHTML = '';
     const numOfNewsItems = Math.min(news.length, 10);
     for (let i = 0; i < numOfNewsItems; i++) {
@@ -14552,6 +14579,7 @@ function makeCandleGraph() {
                     annotations: {
                         close: {
                             type: 'line',
+                            display: true,
                             yScaleID: 'p',
                             yMin: 0,
                             yMax: 0,

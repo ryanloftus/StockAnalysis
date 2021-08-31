@@ -1,4 +1,7 @@
 // TODO: add technical analysis
+//   - Relative Strength Analysis: include a graph showing the price of the security divided by the price of S&P 500/NASDAQ 100/DJIA
+//   - moving averages (60 day, 20 day, Bollinger Bands, golden/death cross)
+//   - momentum oscillator
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -21,6 +24,8 @@ function getTicker() {
     newTicker = tickerInput.value.toUpperCase();
     if (newTicker.endsWith('.US')) {
         newTicker = newTicker.slice(0, newTicker.length - 3);
+    } else if (newTicker.includes('.')) {
+        newTicker = null;
     }
     return newTicker;
 }
@@ -39,15 +44,15 @@ async function displayNews() {
 
 async function displayStockData(display) {
     const exchangeRates = await forexData;
-    if (display === DISPLAY_CANDLE) {
+    if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData('candle', ticker), document.getElementById('close').innerHTML, 
             exchangeRates.quote[document.getElementById('currency').value]);
-    } else if (display === DISPLAY_NOMINAL) {
+    } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
-        if (newTicker === ticker) {
+        if (newTicker && newTicker === ticker) {
             return;
         }
         const lookup = await utils.getData('lookup', newTicker);
@@ -63,8 +68,10 @@ async function displayStockData(display) {
             displayRecommendationTrends()
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
-        } else {
+        } else if (newTicker) {
             alert('Could not find a US stock with ticker: ' + newTicker);
+        } else {
+            alert('Request failed. Try entering a US stock or ETF ticker symbol.');
         }
         render.toggleLoader();
     }
@@ -89,6 +96,7 @@ tickerInput.onkeydown = event => {
 document.getElementById('search').onclick = () => displayStockData(DISPLAY_ALL);
 tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
 document.getElementsByName('date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_CANDLE));
+document.getElementById('log-scale-toggle').onclick = event => render.toggleLogScale(event.currentTarget);
 
 // open and close the settings window
 document.getElementById('settings').onclick = function() {

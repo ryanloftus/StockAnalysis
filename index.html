@@ -62,19 +62,23 @@
                     <li><input name="date-range" type="radio" id="one-month" value="1m"><label for="one-month">1M</label></li>
                     <li><input name="date-range" type="radio" id="five-days" value="5d"><label for="five-days">5D</label></li>
                 </ul>
+                <button id="log-scale-toggle">Log</button>
                 <canvas id="candle-graph"></canvas>
             </div>
             <div id="technical-analysis" class="tabcontent" hidden>
-                Technical Analysis coming soon...
-                <canvas id="moving-avg-graph"></canvas>
+                <p>Technical Analysis coming soon...</p>
+                <!-- <label for="technical-analysis-option">Select a chart to display:</label>
+                    <select name="technical-analysis-option" id="technical-analysis-option">
+                        <option value="relative-strength" selected>Relative Strength Analysis</option>
+                        <option value="moving-avg">Moving Averages</option>
+                        <option value="momentum-oscillator">Momentum Oscillator</option>
+                    </select>
+                <canvas id="technical-analysis-graph"></canvas> -->
             </div>
             <div id="recommendation-trends" class="tabcontent" hidden>
                 <canvas id="recommendation-graph"></canvas>
             </div>
-            <section id="news" class="tabcontent" hidden>
-                <h1 class="large">Company News</h1>
-                <div id="news-items"></div>
-            </section>
+            <section id="news" class="tabcontent" hidden></section>
         </div>
         <script src="./bundle.js"></script>
     </body>

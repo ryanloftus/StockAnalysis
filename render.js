@@ -18,6 +18,20 @@ module.exports.toggleLoader = function() {
     }
 }
 
+module.exports.toggleLogScale = function(element) {
+    let prevData = candleGraph.data.datasets[0].data;
+    if (document.getElementById('log-scale-toggle').className !== 'active') {
+        candleGraph.data.datasets[0].data = prevData.map(data => Math.log(data));
+        candleGraph.options.plugins.annotation.annotations['close'].display = false;
+        element.className = 'active';
+    } else {
+        candleGraph.data.datasets[0].data = prevData.map(data => Math.exp(data));
+        candleGraph.options.plugins.annotation.annotations['close'].display = true;
+        element.className = '';
+    }
+    candleGraph.update();
+}
+
 function getReadableDates(dates) {
     // include time in date if dates are less than 12 hours apart
     if (dates[1] - dates[0] < 60 * 60 * 12) {
@@ -31,7 +45,10 @@ function getReadableDates(dates) {
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 
-function getDollarVal(usdVal, exchangeRate) {
+function getDollarVal(usdVal, exchangeRate, logScale = false) {
+    if (logScale) {
+        return (usdVal ? Math.log(usdVal * exchangeRate) : blankVal);
+    }
     return (usdVal ? (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2) : blankVal);
 }
 
@@ -52,7 +69,8 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
 
 module.exports.setCandle = function(candle, close, exchangeRate) {
     candleGraph.data.labels = getReadableDates(candle.t);
-    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
+    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate, 
+        document.getElementById('log-scale-toggle').className === 'active' ? true : false));
     candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
     candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(close, exchangeRate);
     candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(close, exchangeRate);
@@ -99,7 +117,7 @@ module.exports.renderRecommendationTrends = function(recommendationTrends) {
 }
 
 module.exports.renderNews = function(news) {
-    const newsItems = document.getElementById('news-items');
+    const newsItems = document.getElementById('news');
     newsItems.innerHTML = '';
     const numOfNewsItems = Math.min(news.length, 10);
     for (let i = 0; i < numOfNewsItems; i++) {
@@ -138,6 +156,7 @@ function makeCandleGraph() {
                     annotations: {
                         close: {
                             type: 'line',
+                            display: true,
                             yScaleID: 'p',
                             yMin: 0,
                             yMax: 0,

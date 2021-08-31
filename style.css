@@ -4,10 +4,6 @@
     font-family: 'Roboto', sans-serif;
     margin: 0;
 }
-h1 {
-    text-align: center;
-    margin: 12px;
-}
 table {
     margin: 12px;
 }
@@ -96,13 +92,14 @@ th, td {
 .tab button.active {
     background-color: #ccc;
 }
-/* style timespan radio buttons */
+/* style candle graph options */
 #select-timespan {
     list-style-type: none;
     margin: 25px 0 0 0;
     padding: 0;
 }
-#select-timespan li {
+#select-timespan li, 
+#log-scale-toggle {
     float: left;
     margin: 0 5px 0 0;
     width: 100px;
@@ -125,7 +122,8 @@ input[type="radio"] {
 #select-timespan input[type="radio"]:checked+label {
     background-color: #ccc;
 }
-#select-timespan label {
+#select-timespan label,
+#log-scale-toggle {
     padding: 0.2em;
     border: 2px solid #ccc;
     border-radius: 0.2em;
@@ -133,7 +131,20 @@ input[type="radio"] {
     z-index: 1;
 }  
 #select-timespan label:hover {
-    background: #ddd;
+    background-color: #ddd;
+}
+#log-scale-toggle {
+    background-color: #fff;
+    border-color: #3498db;
+}
+#log-scale-toggle.active {
+    background-color: #3498db;
+}
+#log-scale-toggle:hover {
+    background-color: #7cbde9;
+}
+#log-scale-toggle.active:hover {
+    background-color: #1b6698;
 }
 /* style popups */
 .popup {
