@@ -3,7 +3,13 @@
 //   - Relative Strength Analysis: include a graph showing the price of the security divided by the price of S&P 500/NASDAQ 100/DJIA
 //   - moving averages (60 day, 20 day, Bollinger Bands, golden/death cross)
 //   - momentum oscillator
-// TODO: log scale option for candle graph
+// PLAN:
+//   - reuse candle graph and add options for it in place of the other summary info
+//      -> remove prev. close from graph same as for log but for technical analysis tab
+//   - find a way to let candle graph + date range be in both technical analysis and summary tabs
+//      -> put them in their own "tab" div that displays whenever technical analysis or summary are active
+//   - make log scale part of technical analysis
+//   - toggle loader for technical analysis after clicking apply
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -14442,13 +14448,12 @@ module.exports.toggleLoader = function() {
 }
 
 module.exports.toggleLogScale = function(element) {
-    let prevData = candleGraph.data.datasets[0].data;
     if (document.getElementById('log-scale-toggle').className !== 'active') {
-        candleGraph.data.datasets[0].data = prevData.map(data => Math.log(data));
+        candleGraph.options.scales.p.type = 'logarithmic';
         candleGraph.options.plugins.annotation.annotations['close'].display = false;
         element.className = 'active';
     } else {
-        candleGraph.data.datasets[0].data = prevData.map(data => Math.exp(data));
+        candleGraph.options.scales.p.type = 'linear';
         candleGraph.options.plugins.annotation.annotations['close'].display = true;
         element.className = '';
     }
@@ -14468,10 +14473,7 @@ function getReadableDates(dates) {
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 
-function getDollarVal(usdVal, exchangeRate, logScale = false) {
-    if (logScale) {
-        return (usdVal ? Math.log(usdVal * exchangeRate) : blankVal);
-    }
+function getDollarVal(usdVal, exchangeRate) {
     return (usdVal ? (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2) : blankVal);
 }
 
@@ -14492,8 +14494,7 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
 
 module.exports.setCandle = function(candle, close, exchangeRate) {
     candleGraph.data.labels = getReadableDates(candle.t);
-    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate, 
-        document.getElementById('log-scale-toggle').className === 'active' ? true : false));
+    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
     candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
     candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(close, exchangeRate);
     candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(close, exchangeRate);

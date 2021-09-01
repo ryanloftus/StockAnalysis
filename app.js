@@ -2,6 +2,13 @@
 //   - Relative Strength Analysis: include a graph showing the price of the security divided by the price of S&P 500/NASDAQ 100/DJIA
 //   - moving averages (60 day, 20 day, Bollinger Bands, golden/death cross)
 //   - momentum oscillator
+// PLAN:
+//   - reuse candle graph and add options for it in place of the other summary info
+//      -> remove prev. close from graph same as for log but for technical analysis tab
+//   - find a way to let candle graph + date range be in both technical analysis and summary tabs
+//      -> put them in their own "tab" div that displays whenever technical analysis or summary are active
+//   - make log scale part of technical analysis
+//   - toggle loader for technical analysis after clicking apply
 
 const utils = require('./utils.js');
 const render = require('./render.js');
