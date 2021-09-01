@@ -9,31 +9,33 @@ const endpointBuilder = {
         forex: 'forex/rates?base=',
         news: 'company-news?symbol='
     },
-    getEndpoint: function(paramKey, ticker) {
-        return this.url + this.param[paramKey] + ticker + getDateParams(paramKey) + this.apiKey;
+    getEndpoint: function(options, ticker) {
+        return this.url + this.param[options.paramKey] + ticker + getDateParams(options) + this.apiKey;
     }
 };
 
-getDateParams = function(paramKey) {
+module.exports.GET_FOREX = {paramKey: 'forex'};
+module.exports.GET_LOOKUP = {paramKey: 'lookup'};
+module.exports.GET_QUOTE = {paramKey: 'quote'};
+module.exports.GET_CANDLE = {paramKey: 'candle', dateRange: {name: 'date-range'}};
+module.exports.GET_RELATIVE_STRENGTH = {paramKey: 'candle', dateRange: {name: 'ta-date-range'}};
+module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D'}};
+module.exports.GET_RECOMMENDATION_TRENDS = {paramKey: 'recommendations'};
+module.exports.GET_NEWS = {paramKey: 'news'};
+
+getDateParams = function(options) {
     const now = new Date();
     let fromDate = new Date();
-    if (paramKey === 'candle') {
-        let dateRange; 
-        if (!document.getElementById('summary').hasAttribute('hidden')) {
-            dateRange = document.querySelector('input[name="date-range"]:checked').value;
-        } else if (!document.getElementById('technical-analysis').hasAttribute('hidden')) {
-            dateRange = document.querySelector('input[name="ta-date-range"]:checked').value;
-        } else {
-            return '';
-        }
+    if (options.dateRange) {
+        let dateRange = document.querySelector('input[name="' + options.dateRange.name + '"]:checked').value;
         const timeUnit = dateRange.slice(-1);
         const timeAmount = dateRange.substring(0, dateRange.length - 1);
-        let resolution = 'D';
+        let resolution = options.dateRange.resolution || 'D';
+        if (!options.dateRange.resolution && (dateRange === 'max' || (timeUnit === 'y' && timeAmount > 1))) {
+            resolution = 'W';
+        }
         if (timeUnit === 'y') {
             fromDate.setFullYear(now.getFullYear() - timeAmount);
-            if (timeAmount > 1) {
-                resolution = 'W';
-            }
         } else if (timeUnit === 'm') {
             fromDate.setMonth(now.getMonth() - timeAmount);
         } else if (timeUnit === 'd') {
@@ -41,10 +43,9 @@ getDateParams = function(paramKey) {
             resolution = 30;
         } else {
             fromDate = new Date(0);
-            resolution = 'W';
         }
         return '&resolution=' + resolution + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
-    } else if (paramKey === 'news') {
+    } else if (options.paramKey === 'news') {
         fromDate.setDate(now.getDate() - 7);
         return '&from=' + fromDate.toISOString().slice(0, 10) + '&to=' + now.toISOString().slice(0, 10);
     } else {
@@ -52,8 +53,8 @@ getDateParams = function(paramKey) {
     }
 }
 
-module.exports.getData = async function(paramKey, ticker) {
-    const endpoint = endpointBuilder.getEndpoint(paramKey, ticker);
+module.exports.getData = async function(options, ticker) {
+    const endpoint = endpointBuilder.getEndpoint(options, ticker);
     try {
         const response = await fetch(endpoint, {method: 'GET'});
         if (response.ok) {

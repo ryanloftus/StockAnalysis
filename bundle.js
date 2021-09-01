@@ -1,17 +1,19 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // TODO: add technical analysis
-//   - moving averages (60 day, 20 day, 200 day)
+//   - moving averages (60 day, 20 day)
 //   - Bollinger Bands
 //   - momentum oscillator
+// TODO: recreate data.datasets for technical analysis change so correct labels are used
 // TODO: add ? hover to show a popup explaining the current selected technical analysis chart
 // TODO: toggle loader for technical analysis after clicking apply if needed
+// TODO: global exchange rate var?
 
 const utils = require('./utils.js');
 const render = require('./render.js');
 
 const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
-const forexData = utils.getData('forex', 'USD');
+const forexData = utils.getData(utils.GET_FOREX, 'USD');
 
 const DISPLAY_ALL = 0;
 const DISPLAY_CANDLE = 1;
@@ -34,38 +36,42 @@ function getTicker() {
 }
 
 async function displaySummary(name, exchangeRate) {
-    render.renderSummary(name, await utils.getData('quote', ticker), await utils.getData('candle', ticker), exchangeRate);
+    render.renderSummary(name, await utils.getData(utils.GET_QUOTE, ticker), await utils.getData(utils.GET_CANDLE, ticker), exchangeRate);
 }
 
-async function displayTechnicalAnalysis() {
+async function displayTechnicalAnalysis(exchangeRate) {
     const option = document.getElementById('ta-option').value;
     if (option === 'relative-strength') {
-        render.renderRelativeStrengthAnalysis(await utils.getData('candle', ticker), await utils.getData('candle', 'SPY'));
+        render.renderRelativeStrengthAnalysis(await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker), 
+            await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY'));
+    } else if (option === 'moving-avg') {
+        render.renderMovingAvg(await utils.getData(utils.GET_MOVING_AVG, ticker), exchangeRate);
     }
 }
 
 async function displayRecommendationTrends() {
-    render.renderRecommendationTrends(await utils.getData('recommendations', ticker));
+    render.renderRecommendationTrends(await utils.getData(utils.GET_RECOMMENDATION_TRENDS, ticker));
 }
 
 async function displayNews() {
-    render.renderNews(await utils.getData('news', ticker));
+    render.renderNews(await utils.getData(utils.GET_NEWS, ticker, {news: true}));
 }
 
 async function displayStockData(display) {
     const exchangeRates = await forexData;
     if (display === DISPLAY_CANDLE && ticker) {
-        render.setCandle(await utils.getData('candle', ticker), document.getElementById('close').innerHTML, 
-            exchangeRates.quote[document.getElementById('currency').value]);
+        render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
+            document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
         if (newTicker && newTicker === ticker) {
+            render.toggleLoader();
             return;
         }
-        const lookup = await utils.getData('lookup', newTicker);
+        const lookup = await utils.getData(utils.GET_LOOKUP, newTicker);
         let name;
         for (let i = 0; i < lookup.count; i++) {
             if (lookup.result[i].symbol === newTicker) {
@@ -73,10 +79,11 @@ async function displayStockData(display) {
             }
         }
         if (name) {
+            const exchangeRate = exchangeRates.quote[document.getElementById('currency').value];
             setTicker(newTicker);
-            displaySummary(name, exchangeRates.quote[document.getElementById('currency').value]);
+            displaySummary(name, exchangeRate);
+            displayTechnicalAnalysis(exchangeRate);
             displayRecommendationTrends();
-            displayTechnicalAnalysis();
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else if (newTicker) {
@@ -14464,6 +14471,20 @@ module.exports.toggleLogScale = function(element) {
     candleGraph.update();
 }
 
+function getMovingAvg(array, window) {
+    if (window <= 1) {
+        return array;
+    }
+    let movingAvg = [];
+    for (let i = 0; i < window; i++) {
+        movingAvg.push(null);
+    }
+    for (let i = window; i <= array.length; i++) {
+        movingAvg.push(array.slice(i - window, i).reduce((num1, num2) => num1 + num2) / window);
+    }
+    return movingAvg
+}
+
 function getReadableDates(dates) {
     // include time in date if dates are less than 12 hours apart
     if (dates[1] - dates[0] < 60 * 60 * 12) {
@@ -14541,6 +14562,29 @@ module.exports.renderRelativeStrengthAnalysis = function(candle, spyCandle) {
     technicalAnalysisGraph.update();
 }
 
+module.exports.renderMovingAvg = function(candle, exchangeRate) {
+    if (candle.s !== 'ok') {
+        return;
+    }
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: '20 Day SMA', 
+        data: getMovingAvg(candle.c, 20).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#2779e6', 
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: '60 Day SMA', 
+        data: getMovingAvg(candle.c, 60).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921', 
+        radius: 0
+    });
+    technicalAnalysisGraph.update();
+}
+
 module.exports.renderRecommendationTrends = function(recommendationTrends) {
     for (let i = 0; i < recommendationGraph.data.datasets.length; i++) {
         recommendationGraph.data.datasets[i].data = [0, 0, 0, 0, 0];
@@ -14613,7 +14657,7 @@ function makeTechnicalAnalysisGraph() {
     return new Chart(document.getElementById('ta-graph'), {
         data: {
             labels: [], 
-            datasets: [{type: 'line', label: 'Relative Strength', data: [], borderColor: '#2779e6', radius: 0}]
+            datasets: [{type: 'line', data: [], borderColor: '#2779e6', radius: 0}]
         },
         options: {
             responsive: true,
@@ -14652,31 +14696,33 @@ const endpointBuilder = {
         forex: 'forex/rates?base=',
         news: 'company-news?symbol='
     },
-    getEndpoint: function(paramKey, ticker) {
-        return this.url + this.param[paramKey] + ticker + getDateParams(paramKey) + this.apiKey;
+    getEndpoint: function(options, ticker) {
+        return this.url + this.param[options.paramKey] + ticker + getDateParams(options) + this.apiKey;
     }
 };
 
-getDateParams = function(paramKey) {
+module.exports.GET_FOREX = {paramKey: 'forex'};
+module.exports.GET_LOOKUP = {paramKey: 'lookup'};
+module.exports.GET_QUOTE = {paramKey: 'quote'};
+module.exports.GET_CANDLE = {paramKey: 'candle', dateRange: {name: 'date-range'}};
+module.exports.GET_RELATIVE_STRENGTH = {paramKey: 'candle', dateRange: {name: 'ta-date-range'}};
+module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D'}};
+module.exports.GET_RECOMMENDATION_TRENDS = {paramKey: 'recommendations'};
+module.exports.GET_NEWS = {paramKey: 'news'};
+
+getDateParams = function(options) {
     const now = new Date();
     let fromDate = new Date();
-    if (paramKey === 'candle') {
-        let dateRange; 
-        if (!document.getElementById('summary').hasAttribute('hidden')) {
-            dateRange = document.querySelector('input[name="date-range"]:checked').value;
-        } else if (!document.getElementById('technical-analysis').hasAttribute('hidden')) {
-            dateRange = document.querySelector('input[name="ta-date-range"]:checked').value;
-        } else {
-            return '';
-        }
+    if (options.dateRange) {
+        let dateRange = document.querySelector('input[name="' + options.dateRange.name + '"]:checked').value;
         const timeUnit = dateRange.slice(-1);
         const timeAmount = dateRange.substring(0, dateRange.length - 1);
-        let resolution = 'D';
+        let resolution = options.dateRange.resolution || 'D';
+        if (!options.dateRange.resolution && (dateRange === 'max' || (timeUnit === 'y' && timeAmount > 1))) {
+            resolution = 'W';
+        }
         if (timeUnit === 'y') {
             fromDate.setFullYear(now.getFullYear() - timeAmount);
-            if (timeAmount > 1) {
-                resolution = 'W';
-            }
         } else if (timeUnit === 'm') {
             fromDate.setMonth(now.getMonth() - timeAmount);
         } else if (timeUnit === 'd') {
@@ -14684,10 +14730,9 @@ getDateParams = function(paramKey) {
             resolution = 30;
         } else {
             fromDate = new Date(0);
-            resolution = 'W';
         }
         return '&resolution=' + resolution + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
-    } else if (paramKey === 'news') {
+    } else if (options.paramKey === 'news') {
         fromDate.setDate(now.getDate() - 7);
         return '&from=' + fromDate.toISOString().slice(0, 10) + '&to=' + now.toISOString().slice(0, 10);
     } else {
@@ -14695,8 +14740,8 @@ getDateParams = function(paramKey) {
     }
 }
 
-module.exports.getData = async function(paramKey, ticker) {
-    const endpoint = endpointBuilder.getEndpoint(paramKey, ticker);
+module.exports.getData = async function(options, ticker) {
+    const endpoint = endpointBuilder.getEndpoint(options, ticker);
     try {
         const response = await fetch(endpoint, {method: 'GET'});
         if (response.ok) {

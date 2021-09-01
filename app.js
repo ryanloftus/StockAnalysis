@@ -1,16 +1,21 @@
 // TODO: add technical analysis
-//   - moving averages (60 day, 20 day, 200 day)
+//   - moving averages (60 day, 20 day)
 //   - Bollinger Bands
 //   - momentum oscillator
+// TODO: recreate data.datasets for technical analysis change so correct labels are used
 // TODO: add ? hover to show a popup explaining the current selected technical analysis chart
+// TODO: on change function for technical analysis dropdown (change date range availability)
+// TODO: on click for technical analysis apply button
 // TODO: toggle loader for technical analysis after clicking apply if needed
+// TODO: global exchange rate var?
+// TODO: make moving average take extra 3 months of data then chop off the first 60 days so we have data for the whole range
 
 const utils = require('./utils.js');
 const render = require('./render.js');
 
 const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
-const forexData = utils.getData('forex', 'USD');
+const forexData = utils.getData(utils.GET_FOREX, 'USD');
 
 const DISPLAY_ALL = 0;
 const DISPLAY_CANDLE = 1;
@@ -33,38 +38,42 @@ function getTicker() {
 }
 
 async function displaySummary(name, exchangeRate) {
-    render.renderSummary(name, await utils.getData('quote', ticker), await utils.getData('candle', ticker), exchangeRate);
+    render.renderSummary(name, await utils.getData(utils.GET_QUOTE, ticker), await utils.getData(utils.GET_CANDLE, ticker), exchangeRate);
 }
 
-async function displayTechnicalAnalysis() {
+async function displayTechnicalAnalysis(exchangeRate) {
     const option = document.getElementById('ta-option').value;
     if (option === 'relative-strength') {
-        render.renderRelativeStrengthAnalysis(await utils.getData('candle', ticker), await utils.getData('candle', 'SPY'));
+        render.renderRelativeStrengthAnalysis(await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker), 
+            await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY'));
+    } else if (option === 'moving-avg') {
+        render.renderMovingAvg(await utils.getData(utils.GET_MOVING_AVG, ticker), exchangeRate);
     }
 }
 
 async function displayRecommendationTrends() {
-    render.renderRecommendationTrends(await utils.getData('recommendations', ticker));
+    render.renderRecommendationTrends(await utils.getData(utils.GET_RECOMMENDATION_TRENDS, ticker));
 }
 
 async function displayNews() {
-    render.renderNews(await utils.getData('news', ticker));
+    render.renderNews(await utils.getData(utils.GET_NEWS, ticker, {news: true}));
 }
 
 async function displayStockData(display) {
     const exchangeRates = await forexData;
     if (display === DISPLAY_CANDLE && ticker) {
-        render.setCandle(await utils.getData('candle', ticker), document.getElementById('close').innerHTML, 
-            exchangeRates.quote[document.getElementById('currency').value]);
+        render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
+            document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
         if (newTicker && newTicker === ticker) {
+            render.toggleLoader();
             return;
         }
-        const lookup = await utils.getData('lookup', newTicker);
+        const lookup = await utils.getData(utils.GET_LOOKUP, newTicker);
         let name;
         for (let i = 0; i < lookup.count; i++) {
             if (lookup.result[i].symbol === newTicker) {
@@ -72,10 +81,11 @@ async function displayStockData(display) {
             }
         }
         if (name) {
+            const exchangeRate = exchangeRates.quote[document.getElementById('currency').value];
             setTicker(newTicker);
-            displaySummary(name, exchangeRates.quote[document.getElementById('currency').value]);
+            displaySummary(name, exchangeRate);
+            displayTechnicalAnalysis(exchangeRate);
             displayRecommendationTrends();
-            displayTechnicalAnalysis();
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else if (newTicker) {

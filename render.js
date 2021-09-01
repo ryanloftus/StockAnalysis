@@ -32,6 +32,20 @@ module.exports.toggleLogScale = function(element) {
     candleGraph.update();
 }
 
+function getMovingAvg(array, window) {
+    if (window <= 1) {
+        return array;
+    }
+    let movingAvg = [];
+    for (let i = 0; i < window; i++) {
+        movingAvg.push(null);
+    }
+    for (let i = window; i <= array.length; i++) {
+        movingAvg.push(array.slice(i - window, i).reduce((num1, num2) => num1 + num2) / window);
+    }
+    return movingAvg
+}
+
 function getReadableDates(dates) {
     // include time in date if dates are less than 12 hours apart
     if (dates[1] - dates[0] < 60 * 60 * 12) {
@@ -109,6 +123,29 @@ module.exports.renderRelativeStrengthAnalysis = function(candle, spyCandle) {
     technicalAnalysisGraph.update();
 }
 
+module.exports.renderMovingAvg = function(candle, exchangeRate) {
+    if (candle.s !== 'ok') {
+        return;
+    }
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: '20 Day SMA', 
+        data: getMovingAvg(candle.c, 20).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#2779e6', 
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: '60 Day SMA', 
+        data: getMovingAvg(candle.c, 60).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921', 
+        radius: 0
+    });
+    technicalAnalysisGraph.update();
+}
+
 module.exports.renderRecommendationTrends = function(recommendationTrends) {
     for (let i = 0; i < recommendationGraph.data.datasets.length; i++) {
         recommendationGraph.data.datasets[i].data = [0, 0, 0, 0, 0];
@@ -181,7 +218,7 @@ function makeTechnicalAnalysisGraph() {
     return new Chart(document.getElementById('ta-graph'), {
         data: {
             labels: [], 
-            datasets: [{type: 'line', label: 'Relative Strength', data: [], borderColor: '#2779e6', radius: 0}]
+            datasets: [{type: 'line', data: [], borderColor: '#2779e6', radius: 0}]
         },
         options: {
             responsive: true,
