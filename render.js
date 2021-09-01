@@ -37,9 +37,6 @@ function getMovingAvg(array, window) {
         return array;
     }
     let movingAvg = [];
-    for (let i = 0; i < window; i++) {
-        movingAvg.push(null);
-    }
     for (let i = window; i <= array.length; i++) {
         movingAvg.push(array.slice(i - window, i).reduce((num1, num2) => num1 + num2) / window);
     }
@@ -127,12 +124,12 @@ module.exports.renderMovingAvg = function(candle, exchangeRate) {
     if (candle.s !== 'ok') {
         return;
     }
-    technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
     technicalAnalysisGraph.data.datasets = [];
     technicalAnalysisGraph.data.datasets.push({
         type: 'line', 
         label: '20 Day SMA', 
-        data: getMovingAvg(candle.c, 20).map(val => getDollarVal(val, exchangeRate)), 
+        data: getMovingAvg(candle.c.slice(40), 20).map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#2779e6', 
         radius: 0
     });

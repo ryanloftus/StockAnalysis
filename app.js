@@ -1,5 +1,4 @@
 // TODO: add technical analysis
-//   - moving averages (60 day, 20 day)
 //   - Bollinger Bands
 //   - momentum oscillator
 // TODO: recreate data.datasets for technical analysis change so correct labels are used
@@ -8,7 +7,6 @@
 // TODO: on click for technical analysis apply button
 // TODO: toggle loader for technical analysis after clicking apply if needed
 // TODO: global exchange rate var?
-// TODO: make moving average take extra 3 months of data then chop off the first 60 days so we have data for the whole range
 
 const utils = require('./utils.js');
 const render = require('./render.js');

@@ -5,8 +5,11 @@
 //   - momentum oscillator
 // TODO: recreate data.datasets for technical analysis change so correct labels are used
 // TODO: add ? hover to show a popup explaining the current selected technical analysis chart
+// TODO: on change function for technical analysis dropdown (change date range availability)
+// TODO: on click for technical analysis apply button
 // TODO: toggle loader for technical analysis after clicking apply if needed
 // TODO: global exchange rate var?
+// TODO: make moving average take extra 3 months of data then chop off the first 60 days so we have data for the whole range
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -14476,9 +14479,6 @@ function getMovingAvg(array, window) {
         return array;
     }
     let movingAvg = [];
-    for (let i = 0; i < window; i++) {
-        movingAvg.push(null);
-    }
     for (let i = window; i <= array.length; i++) {
         movingAvg.push(array.slice(i - window, i).reduce((num1, num2) => num1 + num2) / window);
     }
@@ -14566,12 +14566,12 @@ module.exports.renderMovingAvg = function(candle, exchangeRate) {
     if (candle.s !== 'ok') {
         return;
     }
-    technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
     technicalAnalysisGraph.data.datasets = [];
     technicalAnalysisGraph.data.datasets.push({
         type: 'line', 
         label: '20 Day SMA', 
-        data: getMovingAvg(candle.c, 20).map(val => getDollarVal(val, exchangeRate)), 
+        data: getMovingAvg(candle.c.slice(40), 20).map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#2779e6', 
         radius: 0
     });
@@ -14706,7 +14706,7 @@ module.exports.GET_LOOKUP = {paramKey: 'lookup'};
 module.exports.GET_QUOTE = {paramKey: 'quote'};
 module.exports.GET_CANDLE = {paramKey: 'candle', dateRange: {name: 'date-range'}};
 module.exports.GET_RELATIVE_STRENGTH = {paramKey: 'candle', dateRange: {name: 'ta-date-range'}};
-module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D'}};
+module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 90}};
 module.exports.GET_RECOMMENDATION_TRENDS = {paramKey: 'recommendations'};
 module.exports.GET_NEWS = {paramKey: 'news'};
 
@@ -14730,6 +14730,9 @@ getDateParams = function(options) {
             resolution = 30;
         } else {
             fromDate = new Date(0);
+        }
+        if (options.dateRange.addDays) {
+            fromDate.setDate(fromDate.getDate() - options.dateRange.addDays);
         }
         return '&resolution=' + resolution + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
     } else if (options.paramKey === 'news') {

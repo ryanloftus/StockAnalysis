@@ -19,7 +19,7 @@ module.exports.GET_LOOKUP = {paramKey: 'lookup'};
 module.exports.GET_QUOTE = {paramKey: 'quote'};
 module.exports.GET_CANDLE = {paramKey: 'candle', dateRange: {name: 'date-range'}};
 module.exports.GET_RELATIVE_STRENGTH = {paramKey: 'candle', dateRange: {name: 'ta-date-range'}};
-module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D'}};
+module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 90}};
 module.exports.GET_RECOMMENDATION_TRENDS = {paramKey: 'recommendations'};
 module.exports.GET_NEWS = {paramKey: 'news'};
 
@@ -43,6 +43,9 @@ getDateParams = function(options) {
             resolution = 30;
         } else {
             fromDate = new Date(0);
+        }
+        if (options.dateRange.addDays) {
+            fromDate.setDate(fromDate.getDate() - options.dateRange.addDays);
         }
         return '&resolution=' + resolution + '&from=' + Math.floor(fromDate.getTime() / 1000) + '&to=' + Math.floor(now.getTime() / 1000);
     } else if (options.paramKey === 'news') {
