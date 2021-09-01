@@ -3,6 +3,7 @@ const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
 Chart.register(annotationPlugin);
 
 const candleGraph = makeCandleGraph();
+const technicalAnalysisGraph = makeTechnicalAnalysisGraph();
 const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
 
@@ -99,6 +100,15 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
 }
 
+module.exports.renderRelativeStrengthAnalysis = function(candle, spyCandle) {
+    if (candle.s !== 'ok' || spyCandle.s !== 'ok') {
+        return;
+    }
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
+    technicalAnalysisGraph.data.datasets[0].data = candle.c.map((val, index) => val / spyCandle.c[index]);
+    technicalAnalysisGraph.update();
+}
+
 module.exports.renderRecommendationTrends = function(recommendationTrends) {
     for (let i = 0; i < recommendationGraph.data.datasets.length; i++) {
         recommendationGraph.data.datasets[i].data = [0, 0, 0, 0, 0];
@@ -163,6 +173,21 @@ function makeCandleGraph() {
                     }
                 }
             }
+        }
+    });
+}
+
+function makeTechnicalAnalysisGraph() {
+    return new Chart(document.getElementById('ta-graph'), {
+        data: {
+            labels: [], 
+            datasets: [{type: 'line', label: 'Relative Strength', data: [], borderColor: '#2779e6', radius: 0}]
+        },
+        options: {
+            responsive: true,
+            aspectRatio: 2.5,
+            scales: {x: {ticks: {autoSkip: true, maxTicksLimit: 40}}},
+            interaction: {intersect: false, mode: 'index'}
         }
     });
 }

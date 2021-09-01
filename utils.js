@@ -18,7 +18,14 @@ getDateParams = function(paramKey) {
     const now = new Date();
     let fromDate = new Date();
     if (paramKey === 'candle') {
-        const dateRange = document.querySelector('input[name="date-range"]:checked').value;
+        let dateRange; 
+        if (!document.getElementById('summary').hasAttribute('hidden')) {
+            dateRange = document.querySelector('input[name="date-range"]:checked').value;
+        } else if (!document.getElementById('technical-analysis').hasAttribute('hidden')) {
+            dateRange = document.querySelector('input[name="ta-date-range"]:checked').value;
+        } else {
+            return '';
+        }
         const timeUnit = dateRange.slice(-1);
         const timeAmount = dateRange.substring(0, dateRange.length - 1);
         let resolution = 'D';

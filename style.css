@@ -92,13 +92,15 @@ th, td {
 .tab button.active {
     background-color: #ccc;
 }
-/* style candle graph options */
-#select-timespan {
+/* style graph options */
+#date-range,
+#ta-date-range {
     list-style-type: none;
     margin: 25px 0 0 0;
     padding: 0;
 }
-#select-timespan li, 
+#date-range li, 
+#ta-date-range li,
 #log-scale-toggle {
     float: left;
     margin: 0 5px 0 0;
@@ -106,8 +108,10 @@ th, td {
     height: 40px;
     position: relative;
 }
-#select-timespan label,
-#select-timespan input {
+#date-range label,
+#date-range input,
+#ta-date-range label,
+#ta-date-range input {
     display: block;
     position: absolute;
     top: 0;
@@ -119,10 +123,12 @@ input[type="radio"] {
     opacity: 0;
     z-index: 100;
 }
-#select-timespan input[type="radio"]:checked+label {
+#date-range input[type="radio"]:checked+label,
+#ta-date-range input[type="radio"]:checked+label {
     background-color: #ccc;
 }
-#select-timespan label,
+#date-range label,
+#ta-date-range label,
 #log-scale-toggle {
     padding: 0.2em;
     border: 2px solid #ccc;
@@ -130,7 +136,8 @@ input[type="radio"] {
     cursor: pointer;
     z-index: 1;
 }  
-#select-timespan label:hover {
+#date-range label:hover,
+#ta-date-range label:hover {
     background-color: #ddd;
 }
 #log-scale-toggle {

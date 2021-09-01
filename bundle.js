@@ -1,15 +1,10 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 // TODO: add technical analysis
-//   - Relative Strength Analysis: include a graph showing the price of the security divided by the price of S&P 500/NASDAQ 100/DJIA
-//   - moving averages (60 day, 20 day, Bollinger Bands, golden/death cross)
+//   - moving averages (60 day, 20 day, 200 day)
+//   - Bollinger Bands
 //   - momentum oscillator
-// PLAN:
-//   - reuse candle graph and add options for it in place of the other summary info
-//      -> remove prev. close from graph same as for log but for technical analysis tab
-//   - find a way to let candle graph + date range be in both technical analysis and summary tabs
-//      -> put them in their own "tab" div that displays whenever technical analysis or summary are active
-//   - make log scale part of technical analysis
-//   - toggle loader for technical analysis after clicking apply
+// TODO: add ? hover to show a popup explaining the current selected technical analysis chart
+// TODO: toggle loader for technical analysis after clicking apply if needed
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -40,6 +35,13 @@ function getTicker() {
 
 async function displaySummary(name, exchangeRate) {
     render.renderSummary(name, await utils.getData('quote', ticker), await utils.getData('candle', ticker), exchangeRate);
+}
+
+async function displayTechnicalAnalysis() {
+    const option = document.getElementById('ta-option').value;
+    if (option === 'relative-strength') {
+        render.renderRelativeStrengthAnalysis(await utils.getData('candle', ticker), await utils.getData('candle', 'SPY'));
+    }
 }
 
 async function displayRecommendationTrends() {
@@ -73,7 +75,8 @@ async function displayStockData(display) {
         if (name) {
             setTicker(newTicker);
             displaySummary(name, exchangeRates.quote[document.getElementById('currency').value]);
-            displayRecommendationTrends()
+            displayRecommendationTrends();
+            displayTechnicalAnalysis();
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else if (newTicker) {
@@ -14432,6 +14435,7 @@ const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
 Chart.register(annotationPlugin);
 
 const candleGraph = makeCandleGraph();
+const technicalAnalysisGraph = makeTechnicalAnalysisGraph();
 const recommendationGraph = makeRecommendationGraph();
 const blankVal = '--';
 
@@ -14528,6 +14532,15 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
 }
 
+module.exports.renderRelativeStrengthAnalysis = function(candle, spyCandle) {
+    if (candle.s !== 'ok' || spyCandle.s !== 'ok') {
+        return;
+    }
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
+    technicalAnalysisGraph.data.datasets[0].data = candle.c.map((val, index) => val / spyCandle.c[index]);
+    technicalAnalysisGraph.update();
+}
+
 module.exports.renderRecommendationTrends = function(recommendationTrends) {
     for (let i = 0; i < recommendationGraph.data.datasets.length; i++) {
         recommendationGraph.data.datasets[i].data = [0, 0, 0, 0, 0];
@@ -14596,6 +14609,21 @@ function makeCandleGraph() {
     });
 }
 
+function makeTechnicalAnalysisGraph() {
+    return new Chart(document.getElementById('ta-graph'), {
+        data: {
+            labels: [], 
+            datasets: [{type: 'line', label: 'Relative Strength', data: [], borderColor: '#2779e6', radius: 0}]
+        },
+        options: {
+            responsive: true,
+            aspectRatio: 2.5,
+            scales: {x: {ticks: {autoSkip: true, maxTicksLimit: 40}}},
+            interaction: {intersect: false, mode: 'index'}
+        }
+    });
+}
+
 function makeRecommendationGraph() {
     return new Chart(document.getElementById('recommendation-graph'), {
         type: 'bar',
@@ -14633,7 +14661,14 @@ getDateParams = function(paramKey) {
     const now = new Date();
     let fromDate = new Date();
     if (paramKey === 'candle') {
-        const dateRange = document.querySelector('input[name="date-range"]:checked').value;
+        let dateRange; 
+        if (!document.getElementById('summary').hasAttribute('hidden')) {
+            dateRange = document.querySelector('input[name="date-range"]:checked').value;
+        } else if (!document.getElementById('technical-analysis').hasAttribute('hidden')) {
+            dateRange = document.querySelector('input[name="ta-date-range"]:checked').value;
+        } else {
+            return '';
+        }
         const timeUnit = dateRange.slice(-1);
         const timeAmount = dateRange.substring(0, dateRange.length - 1);
         let resolution = 'D';

@@ -1,14 +1,9 @@
 // TODO: add technical analysis
-//   - Relative Strength Analysis: include a graph showing the price of the security divided by the price of S&P 500/NASDAQ 100/DJIA
-//   - moving averages (60 day, 20 day, Bollinger Bands, golden/death cross)
+//   - moving averages (60 day, 20 day, 200 day)
+//   - Bollinger Bands
 //   - momentum oscillator
-// PLAN:
-//   - reuse candle graph and add options for it in place of the other summary info
-//      -> remove prev. close from graph same as for log but for technical analysis tab
-//   - find a way to let candle graph + date range be in both technical analysis and summary tabs
-//      -> put them in their own "tab" div that displays whenever technical analysis or summary are active
-//   - make log scale part of technical analysis
-//   - toggle loader for technical analysis after clicking apply
+// TODO: add ? hover to show a popup explaining the current selected technical analysis chart
+// TODO: toggle loader for technical analysis after clicking apply if needed
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -39,6 +34,13 @@ function getTicker() {
 
 async function displaySummary(name, exchangeRate) {
     render.renderSummary(name, await utils.getData('quote', ticker), await utils.getData('candle', ticker), exchangeRate);
+}
+
+async function displayTechnicalAnalysis() {
+    const option = document.getElementById('ta-option').value;
+    if (option === 'relative-strength') {
+        render.renderRelativeStrengthAnalysis(await utils.getData('candle', ticker), await utils.getData('candle', 'SPY'));
+    }
 }
 
 async function displayRecommendationTrends() {
@@ -72,7 +74,8 @@ async function displayStockData(display) {
         if (name) {
             setTicker(newTicker);
             displaySummary(name, exchangeRates.quote[document.getElementById('currency').value]);
-            displayRecommendationTrends()
+            displayRecommendationTrends();
+            displayTechnicalAnalysis();
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else if (newTicker) {

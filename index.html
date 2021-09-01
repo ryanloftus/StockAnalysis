@@ -52,7 +52,7 @@
                     <tr><th>Open</th><th>Close</th><th>High</th><th>Low</th></tr>
                     <tr><td id="open">--</td><td id="close">--</td><td id="high">--</td><td id="low">--</td></tr>
                 </table>
-                <ul id="select-timespan">
+                <ul id="date-range">
                     <li><input name="date-range" type="radio" id="max" value="max"><label for="max">Max</label></li>
                     <li><input name="date-range" type="radio" id="five-years" value="5y"><label for="five-years">5Y</label></li>
                     <li><input name="date-range" type="radio" id="three-years" value="3y"><label for="three-years">3Y</label></li>
@@ -66,15 +66,25 @@
                 <canvas id="candle-graph"></canvas>
             </div>
             <div id="technical-analysis" class="tabcontent" hidden>
-                <label for="technical-analysis-option">Select a chart to display:</label>
-                    <select name="technical-analysis-option" id="technical-analysis-option">
-                        <option value="relative-strength" selected>Relative Strength Analysis</option>
-                        <option value="log-scale">Log Scale</option>
-                        <option value="moving-avg">Moving Averages</option>
-                        <option value="bollinger-bands">Bolligner Bands</option>
-                        <option value="momentum-oscillator">Momentum Oscillator</option>
-                    </select>
+                <label for="ta-option">Select a chart to display:</label>
+                <select name="ta-option" id="ta-option">
+                    <option value="relative-strength" selected>Relative Strength Analysis</option>
+                    <option value="moving-avg">Moving Averages</option>
+                    <option value="bollinger-bands">Bollinger Bands</option>
+                    <option value="momentum-oscillator">Momentum Oscillator</option>
+                </select>
+                <ul id="ta-date-range">
+                    <li><input name="ta-date-range" type="radio" id="ta-max" value="max"><label for="ta-max">Max</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-five-years" value="5y"><label for="ta-five-years">5Y</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-three-years" value="3y"><label for="ta-three-years">3Y</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-one-year" value="1y" checked="true"><label for="ta-one-year">1Y</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-six-months" value="6m"><label for="ta-six-months">6M</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-three-months" value="3m"><label for="ta-three-months">3M</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-one-month" value="1m"><label for="ta-one-month">1M</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-five-days" value="5d"><label for="ta-five-days">5D</label></li>
+                </ul>
                 <button id="apply-ta-settings">Apply</button>
+                <canvas id="ta-graph"></canvas>
             </div>
             <div id="recommendation-trends" class="tabcontent" hidden>
                 <canvas id="recommendation-graph"></canvas>
