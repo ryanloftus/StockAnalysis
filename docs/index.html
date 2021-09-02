@@ -9,69 +9,89 @@
         <link href="./style.css" rel="stylesheet">
     </head>
     <body>
+        <div id="loader" hidden></div>
         <nav id="topnav">
             <div id="search-bar">
-                <input id="input-ticker" type="text" name="ticker" placeholder="Search a US ticker."
+                <input id="input-ticker" type="text" name="ticker" placeholder="Search a US ticker"
                 ><button id="search" type="button" class="material-icons">search</button>
                 <button id="settings" class="material-icons">settings</button>
             </div>
         </nav>
-        <div id="settings-window" class="popup" hidden>
-            <button id="close-settings" class="material-icons">close</button>
-            <div id="settings-options">
-                <label for="currency">Select a currency:</label>
-                <select name="currency" id="currency">
-                    <option value="USD" selected>USD</option>
-                    <option value="CAD">CAD</option>
-                    <option value="EUR">EUR</option>
+        <div id="page-content">
+            <div id="settings-window" class="popup" hidden>
+                <button id="close-settings" class="material-icons">close</button>
+                <div id="settings-options">
+                    <label for="currency">Select a currency:</label>
+                    <select name="currency" id="currency">
+                        <option value="USD" selected>USD</option>
+                        <option value="CAD">CAD</option>
+                        <option value="EUR">EUR</option>
+                    </select>
+                    <p class="very-small">All nominal values will be converted using the current exchange rate.<br>
+                       Refresh the page to update to the latest exchage rate.</p>
+                </div>
+            </div>
+            <div class="tab">
+                <button class="tablinks active" value="summary">Summary</button>
+                <button class="tablinks" value="technical-analysis">Technical Analysis</button>
+                <button class="tablinks" value="recommendation-trends">Recommendation Trends</button>
+                <button class="tablinks" value="news">News</button>
+            </div>
+            <div id="summary" class="tabcontent">
+                <div id="basic-info">
+                    <strong><span id="current" class="large"></span></strong> <span id="display-currency"></span><br>
+                    <strong>
+                        <span id="display-ticker"></span>
+                        <span id="change-arrow" class="material-icons"></span>
+                        <span id="change"></span>
+                        <span id="percent-change"></span>
+                    </strong><br>
+                    <span id="name"></span>
+                </div>
+                <table>
+                    <tr><th>Open</th><th>Close</th><th>High</th><th>Low</th></tr>
+                    <tr><td id="open">--</td><td id="close">--</td><td id="high">--</td><td id="low">--</td></tr>
+                </table>
+                <ul id="date-range">
+                    <li><input name="date-range" type="radio" id="max" value="max"><label for="max">Max</label></li>
+                    <li><input name="date-range" type="radio" id="five-years" value="5y"><label for="five-years">5Y</label></li>
+                    <li><input name="date-range" type="radio" id="three-years" value="3y"><label for="three-years">3Y</label></li>
+                    <li><input name="date-range" type="radio" id="one-year" value="1y" checked="true"><label for="one-year">1Y</label></li>
+                    <li><input name="date-range" type="radio" id="six-months" value="6m"><label for="six-months">6M</label></li>
+                    <li><input name="date-range" type="radio" id="three-months" value="3m"><label for="three-months">3M</label></li>
+                    <li><input name="date-range" type="radio" id="one-month" value="1m"><label for="one-month">1M</label></li>
+                    <li><input name="date-range" type="radio" id="five-days" value="5d"><label for="five-days">5D</label></li>
+                </ul>
+                <button id="log-scale-toggle">Log</button>
+                <canvas id="candle-graph"></canvas>
+            </div>
+            <div id="technical-analysis" class="tabcontent" hidden>
+                <label for="ta-option">Select a chart to display:</label>
+                <select name="ta-option" id="ta-option">
+                    <option value="relative-strength" selected>Relative Strength Analysis</option>
+                    <option value="moving-avg">Moving Averages</option>
+                    <option value="bollinger-bands">Bollinger Bands</option>
+                    <option value="momentum-oscillator">Momentum Oscillator</option>
                 </select>
-                <p class="very-small">All nominal values will be converted using the current exchange rate.<br>
-                   Refresh the page to update to the latest exchage rate.</p>
+                <span class="material-icons">info</span>
+                <ul id="ta-date-range">
+                    <li><input name="ta-date-range" type="radio" id="ta-max" value="max"><label for="ta-max">Max</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-five-years" value="5y"><label for="ta-five-years">5Y</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-three-years" value="3y"><label for="ta-three-years">3Y</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-one-year" value="1y" checked="true"><label for="ta-one-year">1Y</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-six-months" value="6m"><label for="ta-six-months">6M</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-three-months" value="3m"><label for="ta-three-months">3M</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-one-month" value="1m"><label for="ta-one-month">1M</label></li>
+                    <li><input name="ta-date-range" type="radio" id="ta-five-days" value="5d"><label for="ta-five-days">5D</label></li>
+                </ul>
+                <button id="ta-log-scale-toggle">Log</button>
+                <canvas id="ta-graph"></canvas>
             </div>
-        </div>
-        <div class="tab">
-            <button class="tablinks active" value="summary">Summary</button>
-            <button class="tablinks" value="technical-analysis">Technical Analysis</button>
-            <button class="tablinks" value="recommendation-trends">Recommendation Trends</button>
-            <button class="tablinks" value="news">News</button>
-        </div>
-        <div id="summary" class="tabcontent">
-            <div id="basic-info">
-                <strong><span id="current" class="large"></span></strong> <span id="display-currency"></span><br>
-                <strong>
-                    <span id="display-ticker"></span>
-                    <span id="change-arrow" class="material-icons"></span>
-                    <span id="change"></span>
-                    <span id="percent-change"></span>
-                </strong><br>
-                <span id="name"></span>
+            <div id="recommendation-trends" class="tabcontent" hidden>
+                <canvas id="recommendation-graph"></canvas>
             </div>
-            <table>
-                <tr><th>Open</th><th>Close</th><th>High</th><th>Low</th></tr>
-                <tr><td id="open">--</td><td id="close">--</td><td id="high">--</td><td id="low">--</td></tr>
-            </table>
-            <ul id="select-timespan">
-                <li><input name="date-range" type="radio" id="max" value="max"><label for="max">Max</label></li>
-                <li><input name="date-range" type="radio" id="five-years" value="5y"><label for="five-years">5Y</label></li>
-                <li><input name="date-range" type="radio" id="three-years" value="3y"><label for="three-years">3Y</label></li>
-                <li><input name="date-range" type="radio" id="one-year" value="1y" checked="true"><label for="one-year">1Y</label></li>
-                <li><input name="date-range" type="radio" id="six-months" value="6m"><label for="six-months">6M</label></li>
-                <li><input name="date-range" type="radio" id="three-months" value="3m"><label for="three-months">3M</label></li>
-                <li><input name="date-range" type="radio" id="one-month" value="1m"><label for="one-month">1M</label></li>
-                <li><input name="date-range" type="radio" id="five-days" value="5d"><label for="five-days">5D</label></li>
-            </ul>
-            <canvas id="candle-graph"></canvas>
+            <section id="news" class="tabcontent" hidden></section>
         </div>
-        <div id="technical-analysis" class="tabcontent" hidden>
-            <p>Technical Analysis coming soon...</p>
-        </div>
-        <div id="recommendation-trends" class="tabcontent" hidden>
-            <canvas id="recommendation-graph"></canvas>
-        </div>
-        <section id="news" class="tabcontent" hidden>
-            <h1 class="large">Company News</h1>
-            <div id="news-items"></div>
-        </section>
         <script src="./bundle.js"></script>
     </body>
 </html>

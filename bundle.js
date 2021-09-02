@@ -1,15 +1,6 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-// TODO: add technical analysis
-//   - moving averages (60 day, 20 day)
-//   - Bollinger Bands
-//   - momentum oscillator
-// TODO: recreate data.datasets for technical analysis change so correct labels are used
 // TODO: add ? hover to show a popup explaining the current selected technical analysis chart
-// TODO: on change function for technical analysis dropdown (change date range availability)
-// TODO: on click for technical analysis apply button
-// TODO: toggle loader for technical analysis after clicking apply if needed
-// TODO: global exchange rate var?
-// TODO: make moving average take extra 3 months of data then chop off the first 60 days so we have data for the whole range
+// TODO: remove log scale option for momentum oscillator and relative strength
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -21,6 +12,8 @@ const forexData = utils.getData(utils.GET_FOREX, 'USD');
 const DISPLAY_ALL = 0;
 const DISPLAY_CANDLE = 1;
 const DISPLAY_NOMINAL = 2;
+const DISPLAY_TECHNICAL = 3;
+const SAMPLE_INPUT = 'Sample Input: "TSLA"';
 
 let ticker;
 
@@ -43,12 +36,22 @@ async function displaySummary(name, exchangeRate) {
 }
 
 async function displayTechnicalAnalysis(exchangeRate) {
-    const option = document.getElementById('ta-option').value;
-    if (option === 'relative-strength') {
-        render.renderRelativeStrengthAnalysis(await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker), 
-            await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY'));
-    } else if (option === 'moving-avg') {
-        render.renderMovingAvg(await utils.getData(utils.GET_MOVING_AVG, ticker), exchangeRate);
+    switch(document.getElementById('ta-option').value) {
+        case 'relative-strength':
+            render.renderRelativeStrengthAnalysis(await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker), 
+                await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY'));
+            break;
+        case 'moving-avg':
+            render.renderMovingAvg(await utils.getData(utils.GET_MOVING_AVG, ticker), exchangeRate);
+            break;
+        case 'bollinger-bands':
+            render.renderBollingerBands(await utils.getData(utils.GET_BOLLINGER_BANDS, ticker), exchangeRate);
+            break;
+        case 'momentum-oscillator':
+            render.renderMomentumOscillator(await utils.getData(utils.GET_MOMENTUM_OSCILLATOR, ticker), exchangeRate);
+            break;
+        default:
+            return;
     }
 }
 
@@ -65,8 +68,11 @@ async function displayStockData(display) {
     if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
             document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
+    } else if (display === DISPLAY_TECHNICAL && ticker) {
+        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
     } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
+        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
@@ -90,9 +96,9 @@ async function displayStockData(display) {
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else if (newTicker) {
-            alert('Could not find a US stock with ticker: ' + newTicker);
+            alert(`Could not find a US stock with ticker: ${newTicker}\n${SAMPLE_INPUT}`);
         } else {
-            alert('Request failed. Try entering a US stock or ETF ticker symbol.');
+            alert('Request failed. Try entering a US stock or ETF ticker symbol.\n' + SAMPLE_INPUT);
         }
         render.toggleLoader();
     }
@@ -118,6 +124,9 @@ document.getElementById('search').onclick = () => displayStockData(DISPLAY_ALL);
 tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
 document.getElementsByName('date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_CANDLE));
 document.getElementById('log-scale-toggle').onclick = event => render.toggleLogScale(event.currentTarget);
+document.getElementById('ta-log-scale-toggle').onclick = event => render.toggleLogScale(event.currentTarget);
+document.getElementById('ta-option').onchange = () => displayStockData(DISPLAY_TECHNICAL);
+document.getElementsByName('ta-date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_TECHNICAL));
 
 // open and close the settings window
 document.getElementById('settings').onclick = function() {
@@ -14447,7 +14456,6 @@ Chart.register(annotationPlugin);
 const candleGraph = makeCandleGraph();
 const technicalAnalysisGraph = makeTechnicalAnalysisGraph();
 const recommendationGraph = makeRecommendationGraph();
-const blankVal = '--';
 
 module.exports.toggleLoader = function() {
     const loader = document.getElementById('loader');
@@ -14462,16 +14470,25 @@ module.exports.toggleLoader = function() {
 }
 
 module.exports.toggleLogScale = function(element) {
-    if (document.getElementById('log-scale-toggle').className !== 'active') {
-        candleGraph.options.scales.p.type = 'logarithmic';
-        candleGraph.options.plugins.annotation.annotations['close'].display = false;
+    const isTechnicalAnalysisGraph = element.id.startsWith('ta');
+    if (element.className !== 'active') {
+        if (isTechnicalAnalysisGraph) {
+            technicalAnalysisGraph.options.scales.y.type = 'logarithmic';
+        } else {
+            candleGraph.options.scales.p.type = 'logarithmic';
+            candleGraph.options.plugins.annotation.annotations['close'].display = false;
+        }
         element.className = 'active';
     } else {
-        candleGraph.options.scales.p.type = 'linear';
-        candleGraph.options.plugins.annotation.annotations['close'].display = true;
+        if (isTechnicalAnalysisGraph) {
+            technicalAnalysisGraph.options.scales.y.type = 'linear';
+        } else {
+            candleGraph.options.scales.p.type = 'linear';
+            candleGraph.options.plugins.annotation.annotations['close'].display = true;
+        }
         element.className = '';
     }
-    candleGraph.update();
+    isTechnicalAnalysisGraph ? technicalAnalysisGraph.update() : candleGraph.update();
 }
 
 function getMovingAvg(array, window) {
@@ -14482,7 +14499,37 @@ function getMovingAvg(array, window) {
     for (let i = window; i <= array.length; i++) {
         movingAvg.push(array.slice(i - window, i).reduce((num1, num2) => num1 + num2) / window);
     }
-    return movingAvg
+    return movingAvg;
+}
+
+function getStandardDeviation(array, average, size) {
+    return Math.sqrt(array.map(x => Math.pow(x - average, 2)).reduce((num1, num2) => num1 + num2) / size);
+}
+
+function getBollingerBands(array, window, stdDevs) {
+    if (window <= 1) {
+        return array;
+    }
+    let movingAvg = [];
+    let upperBand = [];
+    let lowerBand = [];
+    for (let i = window; i <= array.length; i++) {
+        const nextWindow = array.slice(i - window, i);
+        const nextAvg = nextWindow.reduce((num1, num2) => num1 + num2) / window;
+        const stdDev = getStandardDeviation(nextWindow, nextAvg, window);
+        movingAvg.push(nextAvg);
+        upperBand.push(nextAvg + stdDev * stdDevs);
+        lowerBand.push(nextAvg - stdDev * stdDevs);
+    }
+    return {'movingAvg': movingAvg, 'upperBand': upperBand, 'lowerBand': lowerBand};
+}
+
+function getMomentumOscillator(array, days = 10) {
+    if (days <= 1) {
+        return array;
+    }
+    let momentum = array.slice(days);
+    return momentum.map((num, index) => (num / array[index]) * 100);
 }
 
 function getReadableDates(dates) {
@@ -14499,11 +14546,11 @@ function getReadableDates(dates) {
 }
 
 function getDollarVal(usdVal, exchangeRate) {
-    return (usdVal ? (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2) : blankVal);
+    return (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2);
 }
 
 function getPercentVal(val) {
-    return val ? `(${val}%)` : blankVal;
+    return `(${val}%)`;
 }
 
 function setQuoteVal(element, val, exchangeRate, isChange) {
@@ -14558,7 +14605,15 @@ module.exports.renderRelativeStrengthAnalysis = function(candle, spyCandle) {
         return;
     }
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
-    technicalAnalysisGraph.data.datasets[0].data = candle.c.map((val, index) => val / spyCandle.c[index]);
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: 'Relative Strength', 
+        data: candle.c.map((val, index) => val / spyCandle.c[index]), 
+        borderColor: '#2779e6', 
+        radius: 0
+    });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
     technicalAnalysisGraph.update();
 }
 
@@ -14582,6 +14637,65 @@ module.exports.renderMovingAvg = function(candle, exchangeRate) {
         borderColor: '#e99921', 
         radius: 0
     });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
+    technicalAnalysisGraph.update();
+}
+
+module.exports.renderBollingerBands = function(candle, exchangeRate) {
+    if (candle.s !== 'ok') {
+        return;
+    }
+    const bollingerBands = getBollingerBands(candle.c, 60, 2);
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: 'Price',
+        data: candle.c.slice(60).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#2779e6',
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: '60 Day SMA',
+        data: bollingerBands.movingAvg.map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921',
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: 'SMA + 2 Std Deviations',
+        data: bollingerBands.upperBand.map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921',
+        borderDash: [6, 6],
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: 'SMA - 2 Std Deviations',
+        data: bollingerBands.lowerBand.map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921',
+        borderDash: [6, 6],
+        radius: 0
+    });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
+    technicalAnalysisGraph.update();
+}
+
+module.exports.renderMomentumOscillator = function(candle, exchangeRate) {
+    if (candle.s !== 'ok') {
+        return;
+    }
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(10));
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: 'Momentum',
+        data: getMomentumOscillator(candle.c).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#2779e6', 
+        radius: 0
+    });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = true;
     technicalAnalysisGraph.update();
 }
 
@@ -14663,7 +14777,21 @@ function makeTechnicalAnalysisGraph() {
             responsive: true,
             aspectRatio: 2.5,
             scales: {x: {ticks: {autoSkip: true, maxTicksLimit: 40}}},
-            interaction: {intersect: false, mode: 'index'}
+            interaction: {intersect: false, mode: 'index'},
+            plugins: {
+                annotation: {
+                    annotations: {
+                        momentumOscillatorBaseline: {
+                            type: 'line',
+                            display: false,
+                            yMin: 100,
+                            yMax: 100,
+                            borderColor: '#888',
+                            borderWidth: 2
+                        }
+                    }
+                }
+            }
         }
     });
 }
@@ -14707,6 +14835,8 @@ module.exports.GET_QUOTE = {paramKey: 'quote'};
 module.exports.GET_CANDLE = {paramKey: 'candle', dateRange: {name: 'date-range'}};
 module.exports.GET_RELATIVE_STRENGTH = {paramKey: 'candle', dateRange: {name: 'ta-date-range'}};
 module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 90}};
+module.exports.GET_BOLLINGER_BANDS = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 90}};
+module.exports.GET_MOMENTUM_OSCILLATOR = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 15}};
 module.exports.GET_RECOMMENDATION_TRENDS = {paramKey: 'recommendations'};
 module.exports.GET_NEWS = {paramKey: 'news'};
 

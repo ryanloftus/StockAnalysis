@@ -1,12 +1,5 @@
-// TODO: add technical analysis
-//   - Bollinger Bands
-//   - momentum oscillator
-// TODO: recreate data.datasets for technical analysis change so correct labels are used
 // TODO: add ? hover to show a popup explaining the current selected technical analysis chart
-// TODO: on change function for technical analysis dropdown (change date range availability)
-// TODO: on click for technical analysis apply button
-// TODO: toggle loader for technical analysis after clicking apply if needed
-// TODO: global exchange rate var?
+// TODO: remove log scale option for momentum oscillator and relative strength
 
 const utils = require('./utils.js');
 const render = require('./render.js');
@@ -18,6 +11,8 @@ const forexData = utils.getData(utils.GET_FOREX, 'USD');
 const DISPLAY_ALL = 0;
 const DISPLAY_CANDLE = 1;
 const DISPLAY_NOMINAL = 2;
+const DISPLAY_TECHNICAL = 3;
+const SAMPLE_INPUT = 'Sample Input: "TSLA"';
 
 let ticker;
 
@@ -40,12 +35,22 @@ async function displaySummary(name, exchangeRate) {
 }
 
 async function displayTechnicalAnalysis(exchangeRate) {
-    const option = document.getElementById('ta-option').value;
-    if (option === 'relative-strength') {
-        render.renderRelativeStrengthAnalysis(await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker), 
-            await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY'));
-    } else if (option === 'moving-avg') {
-        render.renderMovingAvg(await utils.getData(utils.GET_MOVING_AVG, ticker), exchangeRate);
+    switch(document.getElementById('ta-option').value) {
+        case 'relative-strength':
+            render.renderRelativeStrengthAnalysis(await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker), 
+                await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY'));
+            break;
+        case 'moving-avg':
+            render.renderMovingAvg(await utils.getData(utils.GET_MOVING_AVG, ticker), exchangeRate);
+            break;
+        case 'bollinger-bands':
+            render.renderBollingerBands(await utils.getData(utils.GET_BOLLINGER_BANDS, ticker), exchangeRate);
+            break;
+        case 'momentum-oscillator':
+            render.renderMomentumOscillator(await utils.getData(utils.GET_MOMENTUM_OSCILLATOR, ticker), exchangeRate);
+            break;
+        default:
+            return;
     }
 }
 
@@ -62,8 +67,11 @@ async function displayStockData(display) {
     if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
             document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
+    } else if (display === DISPLAY_TECHNICAL && ticker) {
+        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
     } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
+        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
@@ -87,9 +95,9 @@ async function displayStockData(display) {
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
         } else if (newTicker) {
-            alert('Could not find a US stock with ticker: ' + newTicker);
+            alert(`Could not find a US stock with ticker: ${newTicker}\n${SAMPLE_INPUT}`);
         } else {
-            alert('Request failed. Try entering a US stock or ETF ticker symbol.');
+            alert('Request failed. Try entering a US stock or ETF ticker symbol.\n' + SAMPLE_INPUT);
         }
         render.toggleLoader();
     }
@@ -115,6 +123,9 @@ document.getElementById('search').onclick = () => displayStockData(DISPLAY_ALL);
 tablinks.forEach(element => element.onclick = event => changeTab(event.currentTarget));
 document.getElementsByName('date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_CANDLE));
 document.getElementById('log-scale-toggle').onclick = event => render.toggleLogScale(event.currentTarget);
+document.getElementById('ta-log-scale-toggle').onclick = event => render.toggleLogScale(event.currentTarget);
+document.getElementById('ta-option').onchange = () => displayStockData(DISPLAY_TECHNICAL);
+document.getElementsByName('ta-date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_TECHNICAL));
 
 // open and close the settings window
 document.getElementById('settings').onclick = function() {

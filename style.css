@@ -101,7 +101,8 @@ th, td {
 }
 #date-range li, 
 #ta-date-range li,
-#log-scale-toggle {
+#log-scale-toggle,
+#ta-log-scale-toggle {
     float: left;
     margin: 0 5px 0 0;
     width: 100px;
@@ -129,7 +130,8 @@ input[type="radio"] {
 }
 #date-range label,
 #ta-date-range label,
-#log-scale-toggle {
+#log-scale-toggle,
+#ta-log-scale-toggle {
     padding: 0.2em;
     border: 2px solid #ccc;
     border-radius: 0.2em;
@@ -140,17 +142,21 @@ input[type="radio"] {
 #ta-date-range label:hover {
     background-color: #ddd;
 }
-#log-scale-toggle {
+#log-scale-toggle,
+#ta-log-scale-toggle {
     background-color: #fff;
     border-color: #3498db;
 }
-#log-scale-toggle.active {
+#log-scale-toggle.active,
+#ta-log-scale-toggle.active {
     background-color: #3498db;
 }
-#log-scale-toggle:hover {
+#log-scale-toggle:hover,
+#ta-log-scale-toggle:hover {
     background-color: #7cbde9;
 }
-#log-scale-toggle.active:hover {
+#log-scale-toggle.active:hover,
+#ta-log-scale-toggle.active:hover {
     background-color: #1b6698;
 }
 /* style popups */

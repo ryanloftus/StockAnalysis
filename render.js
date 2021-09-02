@@ -5,7 +5,6 @@ Chart.register(annotationPlugin);
 const candleGraph = makeCandleGraph();
 const technicalAnalysisGraph = makeTechnicalAnalysisGraph();
 const recommendationGraph = makeRecommendationGraph();
-const blankVal = '--';
 
 module.exports.toggleLoader = function() {
     const loader = document.getElementById('loader');
@@ -20,16 +19,25 @@ module.exports.toggleLoader = function() {
 }
 
 module.exports.toggleLogScale = function(element) {
-    if (document.getElementById('log-scale-toggle').className !== 'active') {
-        candleGraph.options.scales.p.type = 'logarithmic';
-        candleGraph.options.plugins.annotation.annotations['close'].display = false;
+    const isTechnicalAnalysisGraph = element.id.startsWith('ta');
+    if (element.className !== 'active') {
+        if (isTechnicalAnalysisGraph) {
+            technicalAnalysisGraph.options.scales.y.type = 'logarithmic';
+        } else {
+            candleGraph.options.scales.p.type = 'logarithmic';
+            candleGraph.options.plugins.annotation.annotations['close'].display = false;
+        }
         element.className = 'active';
     } else {
-        candleGraph.options.scales.p.type = 'linear';
-        candleGraph.options.plugins.annotation.annotations['close'].display = true;
+        if (isTechnicalAnalysisGraph) {
+            technicalAnalysisGraph.options.scales.y.type = 'linear';
+        } else {
+            candleGraph.options.scales.p.type = 'linear';
+            candleGraph.options.plugins.annotation.annotations['close'].display = true;
+        }
         element.className = '';
     }
-    candleGraph.update();
+    isTechnicalAnalysisGraph ? technicalAnalysisGraph.update() : candleGraph.update();
 }
 
 function getMovingAvg(array, window) {
@@ -40,7 +48,37 @@ function getMovingAvg(array, window) {
     for (let i = window; i <= array.length; i++) {
         movingAvg.push(array.slice(i - window, i).reduce((num1, num2) => num1 + num2) / window);
     }
-    return movingAvg
+    return movingAvg;
+}
+
+function getStandardDeviation(array, average, size) {
+    return Math.sqrt(array.map(x => Math.pow(x - average, 2)).reduce((num1, num2) => num1 + num2) / size);
+}
+
+function getBollingerBands(array, window, stdDevs) {
+    if (window <= 1) {
+        return array;
+    }
+    let movingAvg = [];
+    let upperBand = [];
+    let lowerBand = [];
+    for (let i = window; i <= array.length; i++) {
+        const nextWindow = array.slice(i - window, i);
+        const nextAvg = nextWindow.reduce((num1, num2) => num1 + num2) / window;
+        const stdDev = getStandardDeviation(nextWindow, nextAvg, window);
+        movingAvg.push(nextAvg);
+        upperBand.push(nextAvg + stdDev * stdDevs);
+        lowerBand.push(nextAvg - stdDev * stdDevs);
+    }
+    return {'movingAvg': movingAvg, 'upperBand': upperBand, 'lowerBand': lowerBand};
+}
+
+function getMomentumOscillator(array, days = 10) {
+    if (days <= 1) {
+        return array;
+    }
+    let momentum = array.slice(days);
+    return momentum.map((num, index) => (num / array[index]) * 100);
 }
 
 function getReadableDates(dates) {
@@ -57,11 +95,11 @@ function getReadableDates(dates) {
 }
 
 function getDollarVal(usdVal, exchangeRate) {
-    return (usdVal ? (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2) : blankVal);
+    return (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2);
 }
 
 function getPercentVal(val) {
-    return val ? `(${val}%)` : blankVal;
+    return `(${val}%)`;
 }
 
 function setQuoteVal(element, val, exchangeRate, isChange) {
@@ -116,7 +154,15 @@ module.exports.renderRelativeStrengthAnalysis = function(candle, spyCandle) {
         return;
     }
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
-    technicalAnalysisGraph.data.datasets[0].data = candle.c.map((val, index) => val / spyCandle.c[index]);
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: 'Relative Strength', 
+        data: candle.c.map((val, index) => val / spyCandle.c[index]), 
+        borderColor: '#2779e6', 
+        radius: 0
+    });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
     technicalAnalysisGraph.update();
 }
 
@@ -140,6 +186,65 @@ module.exports.renderMovingAvg = function(candle, exchangeRate) {
         borderColor: '#e99921', 
         radius: 0
     });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
+    technicalAnalysisGraph.update();
+}
+
+module.exports.renderBollingerBands = function(candle, exchangeRate) {
+    if (candle.s !== 'ok') {
+        return;
+    }
+    const bollingerBands = getBollingerBands(candle.c, 60, 2);
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: 'Price',
+        data: candle.c.slice(60).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#2779e6',
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: '60 Day SMA',
+        data: bollingerBands.movingAvg.map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921',
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: 'SMA + 2 Std Deviations',
+        data: bollingerBands.upperBand.map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921',
+        borderDash: [6, 6],
+        radius: 0
+    });
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line',
+        label: 'SMA - 2 Std Deviations',
+        data: bollingerBands.lowerBand.map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#e99921',
+        borderDash: [6, 6],
+        radius: 0
+    });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
+    technicalAnalysisGraph.update();
+}
+
+module.exports.renderMomentumOscillator = function(candle, exchangeRate) {
+    if (candle.s !== 'ok') {
+        return;
+    }
+    technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(10));
+    technicalAnalysisGraph.data.datasets = [];
+    technicalAnalysisGraph.data.datasets.push({
+        type: 'line', 
+        label: 'Momentum',
+        data: getMomentumOscillator(candle.c).map(val => getDollarVal(val, exchangeRate)), 
+        borderColor: '#2779e6', 
+        radius: 0
+    });
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = true;
     technicalAnalysisGraph.update();
 }
 
@@ -221,7 +326,21 @@ function makeTechnicalAnalysisGraph() {
             responsive: true,
             aspectRatio: 2.5,
             scales: {x: {ticks: {autoSkip: true, maxTicksLimit: 40}}},
-            interaction: {intersect: false, mode: 'index'}
+            interaction: {intersect: false, mode: 'index'},
+            plugins: {
+                annotation: {
+                    annotations: {
+                        momentumOscillatorBaseline: {
+                            type: 'line',
+                            display: false,
+                            yMin: 100,
+                            yMax: 100,
+                            borderColor: '#888',
+                            borderWidth: 2
+                        }
+                    }
+                }
+            }
         }
     });
 }

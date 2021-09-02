@@ -20,6 +20,8 @@ module.exports.GET_QUOTE = {paramKey: 'quote'};
 module.exports.GET_CANDLE = {paramKey: 'candle', dateRange: {name: 'date-range'}};
 module.exports.GET_RELATIVE_STRENGTH = {paramKey: 'candle', dateRange: {name: 'ta-date-range'}};
 module.exports.GET_MOVING_AVG = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 90}};
+module.exports.GET_BOLLINGER_BANDS = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 90}};
+module.exports.GET_MOMENTUM_OSCILLATOR = {paramKey: 'candle', dateRange: {name: 'ta-date-range', resolution: 'D', addDays: 15}};
 module.exports.GET_RECOMMENDATION_TRENDS = {paramKey: 'recommendations'};
 module.exports.GET_NEWS = {paramKey: 'news'};
 
