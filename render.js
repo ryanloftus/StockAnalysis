@@ -2,8 +2,14 @@ const Chart = require('./node_modules/chart.js');
 const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
 Chart.register(annotationPlugin);
 
+const taGraphOptions = {
+    'relative-strength': {numDatasets: 1, isMomentumOscillator: false},
+    'moving-avg': {numDatasets: 2, isMomentumOscillator: false},
+    'bollinger-bands': {numDatasets: 4, isMomentumOscillator: false},
+    'momentum-oscillator': {numDatasets: 1, isMomentumOscillator: true}
+}
 const candleGraph = makeCandleGraph();
-const technicalAnalysisGraph = makeTechnicalAnalysisGraph();
+let technicalAnalysisGraph = makeTechnicalAnalysisGraph('relative-strength');
 const recommendationGraph = makeRecommendationGraph();
 
 module.exports.toggleLoader = function() {
@@ -224,6 +230,11 @@ module.exports.renderTechnicalAnalysis = function(option, data) {
     if (data.candle.s !== 'ok' || (data.benchmarkCandle.s && data.benchmarkCandle.s !== 'ok')) {
         return;
     }
+    // destroy and remake graph if number of datasets will change to prevent chart.js error
+    if (option !== technicalAnalysisGraph.options.plugins.title.text) {
+        technicalAnalysisGraph.destroy();
+        technicalAnalysisGraph = makeTechnicalAnalysisGraph(option);
+    }
     switch (option) {
         case 'relative-strength':
             renderRelativeStrengthAnalysis(data.candle, data.benchmarkCandle);
@@ -313,11 +324,15 @@ function makeCandleGraph() {
     });
 }
 
-function makeTechnicalAnalysisGraph() {
-    return new Chart(document.getElementById('ta-graph').getContext('2d'), {
+function makeTechnicalAnalysisGraph(option) {
+    let data = [];
+    for (let i = 0; i < taGraphOptions[option].numDatasets; i++) {
+        data.push({type: 'line', data: [], borderColor: '#2779e6', radius: 0});
+    }
+    return new Chart(document.getElementById('ta-graph'), {
         data: {
-            labels: [], 
-            datasets: [{type: 'line', data: [], borderColor: '#2779e6', radius: 0}]
+            labels: [],
+            datasets: data
         },
         options: {
             responsive: true,
@@ -329,14 +344,15 @@ function makeTechnicalAnalysisGraph() {
                     annotations: {
                         momentumOscillatorBaseline: {
                             type: 'line',
-                            display: false,
+                            display: taGraphOptions[option].isMomentumOscillator,
                             yMin: 100,
                             yMax: 100,
                             borderColor: '#888',
                             borderWidth: 2
                         }
                     }
-                }
+                },
+                title: {display: false, text: option}
             }
         }
     });
