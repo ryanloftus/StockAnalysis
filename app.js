@@ -35,23 +35,26 @@ async function displaySummary(name, exchangeRate) {
 }
 
 async function displayTechnicalAnalysis(exchangeRate) {
-    switch(document.getElementById('ta-option').value) {
+    const option = document.getElementById('ta-option').value;
+    const data = {'candle': [], 'exchangeRate': exchangeRate, 'benchmarkCandle': []};
+    switch(option) {
         case 'relative-strength':
-            render.renderRelativeStrengthAnalysis(await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker), 
-                await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY'));
+            data.candle = await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker);
+            data.benchmarkCandle = await utils.getData(utils.GET_RELATIVE_STRENGTH, 'SPY');
             break;
         case 'moving-avg':
-            render.renderMovingAvg(await utils.getData(utils.GET_MOVING_AVG, ticker), exchangeRate);
+            data.candle = await utils.getData(utils.GET_MOVING_AVG, ticker);
             break;
         case 'bollinger-bands':
-            render.renderBollingerBands(await utils.getData(utils.GET_BOLLINGER_BANDS, ticker), exchangeRate);
+            data.candle = await utils.getData(utils.GET_BOLLINGER_BANDS, ticker);
             break;
         case 'momentum-oscillator':
-            render.renderMomentumOscillator(await utils.getData(utils.GET_MOMENTUM_OSCILLATOR, ticker), exchangeRate);
+            data.candle = await utils.getData(utils.GET_MOMENTUM_OSCILLATOR, ticker);
             break;
         default:
             return;
     }
+    render.renderTechnicalAnalysis(option, data);
 }
 
 async function displayRecommendationTrends() {

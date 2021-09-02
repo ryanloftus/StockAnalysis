@@ -149,102 +149,99 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
 }
 
-module.exports.renderRelativeStrengthAnalysis = function(candle, spyCandle) {
-    if (candle.s !== 'ok' || spyCandle.s !== 'ok') {
-        return;
-    }
+function renderRelativeStrengthAnalysis(candle, spyCandle) {
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t);
-    technicalAnalysisGraph.data.datasets = [];
-    technicalAnalysisGraph.data.datasets.push({
+    technicalAnalysisGraph.data.datasets = [{
         type: 'line', 
         label: 'Relative Strength', 
         data: candle.c.map((val, index) => val / spyCandle.c[index]), 
         borderColor: '#2779e6', 
         radius: 0
-    });
-    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
-    technicalAnalysisGraph.update();
+    }];
 }
 
-module.exports.renderMovingAvg = function(candle, exchangeRate) {
-    if (candle.s !== 'ok') {
-        return;
-    }
+function renderMovingAvg(candle, exchangeRate) {
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
-    technicalAnalysisGraph.data.datasets = [];
-    technicalAnalysisGraph.data.datasets.push({
+    technicalAnalysisGraph.data.datasets = [{
         type: 'line', 
         label: '20 Day SMA', 
         data: getMovingAvg(candle.c.slice(40), 20).map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#2779e6', 
         radius: 0
-    });
-    technicalAnalysisGraph.data.datasets.push({
+    }, {
         type: 'line', 
         label: '60 Day SMA', 
         data: getMovingAvg(candle.c, 60).map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#e99921', 
         radius: 0
-    });
-    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
-    technicalAnalysisGraph.update();
+    }];
 }
 
-module.exports.renderBollingerBands = function(candle, exchangeRate) {
-    if (candle.s !== 'ok') {
-        return;
-    }
+function renderBollingerBands(candle, exchangeRate) {
     const bollingerBands = getBollingerBands(candle.c, 60, 2);
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
-    technicalAnalysisGraph.data.datasets = [];
-    technicalAnalysisGraph.data.datasets.push({
+    technicalAnalysisGraph.data.datasets = [{
         type: 'line',
         label: 'Price',
         data: candle.c.slice(60).map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#2779e6',
         radius: 0
-    });
-    technicalAnalysisGraph.data.datasets.push({
+    }, {
         type: 'line',
         label: '60 Day SMA',
         data: bollingerBands.movingAvg.map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#e99921',
         radius: 0
-    });
-    technicalAnalysisGraph.data.datasets.push({
+    }, {
         type: 'line',
         label: 'SMA + 2 Std Deviations',
         data: bollingerBands.upperBand.map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#e99921',
         borderDash: [6, 6],
         radius: 0
-    });
-    technicalAnalysisGraph.data.datasets.push({
+    }, {
         type: 'line',
         label: 'SMA - 2 Std Deviations',
         data: bollingerBands.lowerBand.map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#e99921',
         borderDash: [6, 6],
         radius: 0
-    });
-    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = false;
-    technicalAnalysisGraph.update();
+    }];
 }
 
-module.exports.renderMomentumOscillator = function(candle, exchangeRate) {
-    if (candle.s !== 'ok') {
-        return;
-    }
+function renderMomentumOscillator(candle, exchangeRate) {
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(10));
-    technicalAnalysisGraph.data.datasets = [];
-    technicalAnalysisGraph.data.datasets.push({
+    technicalAnalysisGraph.data.datasets = [{
         type: 'line', 
         label: 'Momentum',
         data: getMomentumOscillator(candle.c).map(val => getDollarVal(val, exchangeRate)), 
         borderColor: '#2779e6', 
         radius: 0
-    });
-    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = true;
+    }];
+}
+
+module.exports.renderTechnicalAnalysis = function(option, data) {
+    if (data.candle.s !== 'ok' || (data.benchmarkCandle.s && data.benchmarkCandle.s !== 'ok')) {
+        return;
+    }
+    switch (option) {
+        case 'relative-strength':
+            renderRelativeStrengthAnalysis(data.candle, data.benchmarkCandle);
+            break;
+        case 'moving-avg':
+            renderMovingAvg(data.candle, data.exchangeRate);
+            break;
+        case 'bollinger-bands':
+            renderBollingerBands(data.candle, data.exchangeRate);
+            break;
+        case 'momentum-oscillator':
+            renderMomentumOscillator(data.candle, data.exchangeRate);
+            break;
+        default:
+            return;
+    }
+    technicalAnalysisGraph.options.plugins.annotation.annotations.momentumOscillatorBaseline.display = 
+        (option === 'momentum-oscillator') ? true : false;
     technicalAnalysisGraph.update();
 }
 
@@ -317,7 +314,7 @@ function makeCandleGraph() {
 }
 
 function makeTechnicalAnalysisGraph() {
-    return new Chart(document.getElementById('ta-graph'), {
+    return new Chart(document.getElementById('ta-graph').getContext('2d'), {
         data: {
             labels: [], 
             datasets: [{type: 'line', data: [], borderColor: '#2779e6', radius: 0}]
