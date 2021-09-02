@@ -14881,7 +14881,7 @@ module.exports.getData = async function(options, ticker) {
             const jsonResponse = await response.json();
             return jsonResponse;
         } else {
-            throw new Error('Request failed');
+            alert('Request failed');
         }
     }
     catch (error) {
