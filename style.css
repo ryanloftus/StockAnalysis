@@ -23,7 +23,8 @@ th, td {
     display: inline-flex;
     vertical-align: bottom;
 }
-#change-arrow {
+#change-arrow,
+#ta-info {
     line-height: 30px;
     font-size: 28px;
 }
@@ -122,7 +123,7 @@ th, td {
 }
 input[type="radio"] {
     opacity: 0;
-    z-index: 100;
+    z-index: 2;
 }
 #date-range input[type="radio"]:checked+label,
 #ta-date-range input[type="radio"]:checked+label {
@@ -164,7 +165,7 @@ input[type="radio"] {
     border-radius: 2em;
     position: absolute;
     background-color: #ddd;
-    z-index: 2;
+    z-index: 3;
     height: 80%;
     width: 80%;
     border: 2px solid #ccc;
@@ -189,6 +190,40 @@ input[type="radio"] {
     overflow-y: scroll;
     margin: 2em;
 }
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 400px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 3;
+    top: 125%;
+    left: 50%;
+    margin-left: -200px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+.tooltip .tooltiptext::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #555 transparent;
+}
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
 /* color change values */
 .up {
     color: green;
@@ -198,7 +233,7 @@ input[type="radio"] {
 }
 /* create loader */
 #loader {
-    z-index: 3;
+    z-index: 4;
     position: fixed;
     border: 16px solid #f3f3f3;
     border-top: 16px solid #3498db;

@@ -2,12 +2,18 @@ const Chart = require('./node_modules/chart.js');
 const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
 Chart.register(annotationPlugin);
 
+const RELATIVE_STRENGTH_DESC = 'Relative strength analysis is used to compare a security\'s performance to a benchmark. In this case, the benchmark used is the Spyder S&P 500 ETF. Relative strength is calculated by dividing the security\'s price by the price of the benchmark.';
+const MOVING_AVG_DESC = 'The simple moving average (SMA) is calculated by taking the average of the security\'s close prices over the period (ie. the past 60 trading days). When the 20 day SMA crosses the 60 day SMA from below, it is called a golden cross and is considered a bullish sign. When the 20 day SMA crosses the 60 day SMA from above, it is called a death cross and is considered a bearish sign.';
+const BOLLINGER_BANDS_DESC = 'Bollinger Bands compare a securities price to the range formed by an upper and lower band. The bands are calculated by adding or subtracting two standard deviations from the moving average. The period used for calculating the moving average and standard deviations are the same. It is expected that the security price will remain within the Bollinger Bands unless there is significant change in the trend.';
+const MOMENTUM_OSCILLATOR_DESC = 'When the momentum oscillator crosses 100 from below and the trend is positive, it is considered a buy signal. When the oscillator crosses 100 from above and the trend is negative, it is considered a sell signal. Crossovers in the opposite direction of the trend are typically ignored. The momentum oscillator used is a Rate of Change oscillator that oscillates around 100 and is calculated by dividing the security\'s close price by its close price from 10 trading days prior, then multiplying by 100.';
+
 const taGraphOptions = {
-    'relative-strength': {numDatasets: 1, isMomentumOscillator: false},
-    'moving-avg': {numDatasets: 2, isMomentumOscillator: false},
-    'bollinger-bands': {numDatasets: 4, isMomentumOscillator: false},
-    'momentum-oscillator': {numDatasets: 1, isMomentumOscillator: true}
+    'relative-strength': {numDatasets: 1, isMomentumOscillator: false, description: RELATIVE_STRENGTH_DESC},
+    'moving-avg': {numDatasets: 2, isMomentumOscillator: false, description: MOVING_AVG_DESC},
+    'bollinger-bands': {numDatasets: 4, isMomentumOscillator: false, description: BOLLINGER_BANDS_DESC},
+    'momentum-oscillator': {numDatasets: 1, isMomentumOscillator: true, description: MOMENTUM_OSCILLATOR_DESC}
 }
+document.getElementById('ta-desc').innerHTML = taGraphOptions[document.getElementById('ta-option').value].description;
 const candleGraph = makeCandleGraph();
 let technicalAnalysisGraph = makeTechnicalAnalysisGraph('relative-strength');
 const recommendationGraph = makeRecommendationGraph();
@@ -226,14 +232,28 @@ function renderMomentumOscillator(candle, exchangeRate) {
     }];
 }
 
+module.exports.changeTAGraphOption = function(option) {
+    technicalAnalysisGraph.destroy();
+    technicalAnalysisGraph = makeTechnicalAnalysisGraph(option);
+    document.getElementById('ta-desc').innerHTML = taGraphOptions[option].description;
+    const logScaleToggle = document.getElementById('ta-log-scale-toggle');
+    if (option === 'relative-strength' || option === 'momentum-oscillator') {
+        logScaleToggle.setAttribute('hidden', 'hidden');
+        if (logScaleToggle.className === 'active') {
+            this.toggleLogScale(logScaleToggle);
+        }
+    } else if (logScaleToggle.hasAttribute('hidden')) {
+        logScaleToggle.removeAttribute('hidden');
+    }
+}
+
 module.exports.renderTechnicalAnalysis = function(option, data) {
     if (data.candle.s !== 'ok' || (data.benchmarkCandle.s && data.benchmarkCandle.s !== 'ok')) {
         return;
     }
     // destroy and remake graph if number of datasets will change to prevent chart.js error
     if (option !== technicalAnalysisGraph.options.plugins.title.text) {
-        technicalAnalysisGraph.destroy();
-        technicalAnalysisGraph = makeTechnicalAnalysisGraph(option);
+        this.changeTAGraphOption(option);
     }
     switch (option) {
         case 'relative-strength':

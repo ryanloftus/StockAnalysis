@@ -1,6 +1,3 @@
-// TODO: add ? hover to show a popup explaining the current selected technical analysis chart
-// TODO: remove log scale option for momentum oscillator and relative strength
-
 const utils = require('./utils.js');
 const render = require('./render.js');
 
@@ -36,6 +33,10 @@ async function displaySummary(name, exchangeRate) {
 
 async function displayTechnicalAnalysis(exchangeRate) {
     const option = document.getElementById('ta-option').value;
+    if (!ticker) {
+        render.changeTAGraphOption(option);
+        return;
+    }
     const data = {'candle': [], 'exchangeRate': exchangeRate, 'benchmarkCandle': []};
     switch(option) {
         case 'relative-strength':
@@ -70,7 +71,7 @@ async function displayStockData(display) {
     if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
             document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
-    } else if (display === DISPLAY_TECHNICAL && ticker) {
+    } else if (display === DISPLAY_TECHNICAL) {
         displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
     } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);

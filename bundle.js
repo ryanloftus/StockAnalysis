@@ -1,7 +1,4 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-// TODO: add ? hover to show a popup explaining the current selected technical analysis chart
-// TODO: remove log scale option for momentum oscillator and relative strength
-
 const utils = require('./utils.js');
 const render = require('./render.js');
 
@@ -37,6 +34,10 @@ async function displaySummary(name, exchangeRate) {
 
 async function displayTechnicalAnalysis(exchangeRate) {
     const option = document.getElementById('ta-option').value;
+    if (!ticker) {
+        render.changeTAGraphOption(option);
+        return;
+    }
     const data = {'candle': [], 'exchangeRate': exchangeRate, 'benchmarkCandle': []};
     switch(option) {
         case 'relative-strength':
@@ -71,7 +72,7 @@ async function displayStockData(display) {
     if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
             document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
-    } else if (display === DISPLAY_TECHNICAL && ticker) {
+    } else if (display === DISPLAY_TECHNICAL) {
         displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
     } else if (display === DISPLAY_NOMINAL && ticker) {
         displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
@@ -14456,12 +14457,18 @@ const Chart = require('./node_modules/chart.js');
 const annotationPlugin = require('./node_modules/chartjs-plugin-annotation');
 Chart.register(annotationPlugin);
 
+const RELATIVE_STRENGTH_DESC = 'Relative strength analysis is used to compare a security\'s performance to a benchmark. In this case, the benchmark used is the Spyder S&P 500 ETF. Relative strength is calculated by dividing the security\'s price by the price of the benchmark.';
+const MOVING_AVG_DESC = 'The simple moving average (SMA) is calculated by taking the average of the security\'s close prices over the period (ie. the past 60 trading days). When the 20 day SMA crosses the 60 day SMA from below, it is called a golden cross and is considered a bullish sign. When the 20 day SMA crosses the 60 day SMA from above, it is called a death cross and is considered a bearish sign.';
+const BOLLINGER_BANDS_DESC = 'Bollinger Bands compare a securities price to the range formed by an upper and lower band. The bands are calculated by adding or subtracting two standard deviations from the moving average. The period used for calculating the moving average and standard deviations are the same. It is expected that the security price will remain within the Bollinger Bands unless there is significant change in the trend.';
+const MOMENTUM_OSCILLATOR_DESC = 'When the momentum oscillator crosses 100 from below and the trend is positive, it is considered a buy signal. When the oscillator crosses 100 from above and the trend is negative, it is considered a sell signal. Crossovers in the opposite direction of the trend are typically ignored. The momentum oscillator used is a Rate of Change oscillator that oscillates around 100 and is calculated by dividing the security\'s close price by its close price from 10 trading days prior, then multiplying by 100.';
+
 const taGraphOptions = {
-    'relative-strength': {numDatasets: 1, isMomentumOscillator: false},
-    'moving-avg': {numDatasets: 2, isMomentumOscillator: false},
-    'bollinger-bands': {numDatasets: 4, isMomentumOscillator: false},
-    'momentum-oscillator': {numDatasets: 1, isMomentumOscillator: true}
+    'relative-strength': {numDatasets: 1, isMomentumOscillator: false, description: RELATIVE_STRENGTH_DESC},
+    'moving-avg': {numDatasets: 2, isMomentumOscillator: false, description: MOVING_AVG_DESC},
+    'bollinger-bands': {numDatasets: 4, isMomentumOscillator: false, description: BOLLINGER_BANDS_DESC},
+    'momentum-oscillator': {numDatasets: 1, isMomentumOscillator: true, description: MOMENTUM_OSCILLATOR_DESC}
 }
+document.getElementById('ta-desc').innerHTML = taGraphOptions[document.getElementById('ta-option').value].description;
 const candleGraph = makeCandleGraph();
 let technicalAnalysisGraph = makeTechnicalAnalysisGraph('relative-strength');
 const recommendationGraph = makeRecommendationGraph();
@@ -14680,14 +14687,28 @@ function renderMomentumOscillator(candle, exchangeRate) {
     }];
 }
 
+module.exports.changeTAGraphOption = function(option) {
+    technicalAnalysisGraph.destroy();
+    technicalAnalysisGraph = makeTechnicalAnalysisGraph(option);
+    document.getElementById('ta-desc').innerHTML = taGraphOptions[option].description;
+    const logScaleToggle = document.getElementById('ta-log-scale-toggle');
+    if (option === 'relative-strength' || option === 'momentum-oscillator') {
+        logScaleToggle.setAttribute('hidden', 'hidden');
+        if (logScaleToggle.className === 'active') {
+            this.toggleLogScale(logScaleToggle);
+        }
+    } else if (logScaleToggle.hasAttribute('hidden')) {
+        logScaleToggle.removeAttribute('hidden');
+    }
+}
+
 module.exports.renderTechnicalAnalysis = function(option, data) {
     if (data.candle.s !== 'ok' || (data.benchmarkCandle.s && data.benchmarkCandle.s !== 'ok')) {
         return;
     }
     // destroy and remake graph if number of datasets will change to prevent chart.js error
     if (option !== technicalAnalysisGraph.options.plugins.title.text) {
-        technicalAnalysisGraph.destroy();
-        technicalAnalysisGraph = makeTechnicalAnalysisGraph(option);
+        this.changeTAGraphOption(option);
     }
     switch (option) {
         case 'relative-strength':
