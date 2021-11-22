@@ -11,7 +11,7 @@ follow the Download Instructions.
 
 ## Download Instructions
 To get started using the Stock Analysis webpage:
-- Download bundle.js, index.html, and style.css into the same directory
+- Download the docs folder containing bundle.js, index.html, and style.css
 - Or, download the entire repository
 
 Once the files are downloaded, open index.html to start using the webpage.
