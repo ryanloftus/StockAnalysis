@@ -4,7 +4,7 @@ const render = require('./render.js');
 
 const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
-const forexData = utils.getData(utils.GET_FOREX, 'USD');
+// const forexData = utils.getData(utils.GET_FOREX, 'USD');
 
 const DISPLAY_ALL = 0;
 const DISPLAY_CANDLE = 1;
@@ -68,15 +68,17 @@ async function displayNews() {
 }
 
 async function displayStockData(display) {
-    const exchangeRates = await forexData;
+    // const exchangeRates = await forexData;
+	// const er = exchangeRates.quote[document.getElementById('currency').value];
+	const er = 1;
     if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
-            document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
+            document.getElementById('close').innerHTML, er);
     } else if (display === DISPLAY_TECHNICAL) {
-        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
+        displayTechnicalAnalysis(er);
     } else if (display === DISPLAY_NOMINAL && ticker) {
-        displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
-        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
+        displaySummary(document.getElementById('name').innerHTML, er);
+        displayTechnicalAnalysis(er);
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
@@ -92,10 +94,9 @@ async function displayStockData(display) {
             }
         }
         if (name) {
-            const exchangeRate = exchangeRates.quote[document.getElementById('currency').value];
             setTicker(newTicker);
-            displaySummary(name, exchangeRate);
-            displayTechnicalAnalysis(exchangeRate);
+            displaySummary(name, er);
+            displayTechnicalAnalysis(er);
             displayRecommendationTrends();
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
@@ -133,13 +134,13 @@ document.getElementById('ta-option').onchange = () => displayStockData(DISPLAY_T
 document.getElementsByName('ta-date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_TECHNICAL));
 
 // open and close the settings window
-document.getElementById('settings').onclick = function() {
-    document.getElementById('settings-window').removeAttribute('hidden');
-};
-document.getElementById('close-settings').onclick = function () {
-    document.getElementById('settings-window').setAttribute('hidden', 'hidden');
-    displayStockData(DISPLAY_NOMINAL);
-};
+//document.getElementById('settings').onclick = function() {
+//    document.getElementById('settings-window').removeAttribute('hidden');
+//};
+//document.getElementById('close-settings').onclick = function () {
+//    document.getElementById('settings-window').setAttribute('hidden', 'hidden');
+//    displayStockData(DISPLAY_NOMINAL);
+//};
 },{"./render.js":5,"./utils.js":6}],2:[function(require,module,exports){
 /*!
  * Chart.js v3.5.0
@@ -14613,7 +14614,8 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
     setQuoteVal(document.getElementById('open'), quote.o, exchangeRate, false);
     setQuoteVal(document.getElementById('close'), quote.pc, exchangeRate, false);
     this.setCandle(candle, quote.pc, exchangeRate);
-    document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
+    // document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
+	document.getElementById('display-currency').innerHTML = 'USD'
 }
 
 function renderRelativeStrengthAnalysis(candle, spyCandle) {
