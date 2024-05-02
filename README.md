@@ -2,6 +2,8 @@
 
 UPDATE: Due to changes to the Finnhub API free tier, this project no longer works with a free API key.
 
+![image](https://github.com/ryanloftus/stock-analysis/assets/43321270/f88bef52-2acf-4c42-96cb-5976c12a12a5)
+
 ## About
 This webpage provides a tool for searching US exchange traded stocks and funds
 (ETFs) and displays a summary, technical analysis, recommendation trends, and 
