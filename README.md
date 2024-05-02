@@ -1,4 +1,4 @@
-# StockAnalysis
+# stock-analysis
 
 UPDATE: Due to changes to the Finnhub API free tier, this project no longer works with a free API key.
 
