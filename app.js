@@ -3,7 +3,6 @@ const render = require('./render.js');
 
 const tickerInput = document.getElementById('input-ticker');
 const tablinks = Array.from(document.getElementsByClassName('tablinks'));
-const forexData = utils.getData(utils.GET_FOREX, 'USD');
 
 const DISPLAY_ALL = 0;
 const DISPLAY_CANDLE = 1;
@@ -18,7 +17,7 @@ function setTicker(newTicker) {
 }
 
 function getTicker() {
-    newTicker = tickerInput.value.toUpperCase();
+    let newTicker = tickerInput.value.toUpperCase();
     if (newTicker.endsWith('.US')) {
         newTicker = newTicker.slice(0, newTicker.length - 3);
     } else if (newTicker.includes('.')) {
@@ -27,17 +26,17 @@ function getTicker() {
     return newTicker;
 }
 
-async function displaySummary(name, exchangeRate) {
-    render.renderSummary(name, await utils.getData(utils.GET_QUOTE, ticker), await utils.getData(utils.GET_CANDLE, ticker), exchangeRate);
+async function displaySummary(name) {
+    render.renderSummary(name, await utils.getData(utils.GET_QUOTE, ticker), await utils.getData(utils.GET_CANDLE, ticker));
 }
 
-async function displayTechnicalAnalysis(exchangeRate) {
+async function displayTechnicalAnalysis() {
     const option = document.getElementById('ta-option').value;
     if (!ticker) {
         render.changeTAGraphOption(option);
         return;
     }
-    const data = {'candle': [], 'exchangeRate': exchangeRate, 'benchmarkCandle': []};
+    const data = {'candle': [], 'benchmarkCandle': []};
     switch(option) {
         case 'relative-strength':
             data.candle = await utils.getData(utils.GET_RELATIVE_STRENGTH, ticker);
@@ -67,15 +66,14 @@ async function displayNews() {
 }
 
 async function displayStockData(display) {
-    const exchangeRates = await forexData;
     if (display === DISPLAY_CANDLE && ticker) {
         render.setCandle(await utils.getData(utils.GET_CANDLE, ticker), 
-            document.getElementById('close').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
+            document.getElementById('close').innerHTML);
     } else if (display === DISPLAY_TECHNICAL) {
-        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
+        displayTechnicalAnalysis();
     } else if (display === DISPLAY_NOMINAL && ticker) {
-        displaySummary(document.getElementById('name').innerHTML, exchangeRates.quote[document.getElementById('currency').value]);
-        displayTechnicalAnalysis(exchangeRates.quote[document.getElementById('currency').value]);
+        displaySummary(document.getElementById('name').innerHTML);
+        displayTechnicalAnalysis();
     } else if (tickerInput.value) {
         render.toggleLoader();
         const newTicker = getTicker();
@@ -91,10 +89,9 @@ async function displayStockData(display) {
             }
         }
         if (name) {
-            const exchangeRate = exchangeRates.quote[document.getElementById('currency').value];
             setTicker(newTicker);
-            displaySummary(name, exchangeRate);
-            displayTechnicalAnalysis(exchangeRate);
+            displaySummary(name);
+            displayTechnicalAnalysis();
             displayRecommendationTrends();
             displayNews();
             document.getElementById('display-ticker').innerHTML = ticker;
@@ -130,12 +127,3 @@ document.getElementById('log-scale-toggle').onclick = event => render.toggleLogS
 document.getElementById('ta-log-scale-toggle').onclick = event => render.toggleLogScale(event.currentTarget);
 document.getElementById('ta-option').onchange = () => displayStockData(DISPLAY_TECHNICAL);
 document.getElementsByName('ta-date-range').forEach(element => element.onchange = () => displayStockData(DISPLAY_TECHNICAL));
-
-// open and close the settings window
-document.getElementById('settings').onclick = function() {
-    document.getElementById('settings-window').removeAttribute('hidden');
-};
-document.getElementById('close-settings').onclick = function () {
-    document.getElementById('settings-window').setAttribute('hidden', 'hidden');
-    displayStockData(DISPLAY_NOMINAL);
-};

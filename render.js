@@ -106,16 +106,16 @@ function getReadableDates(dates) {
     return dates.map(date => new Date(date * 1000).toDateString().slice(4));
 }
 
-function getDollarVal(usdVal, exchangeRate) {
-    return (Math.round(usdVal * 100 * exchangeRate) / 100).toFixed(2);
+function getDollarVal(usdVal) {
+    return usdVal; // TODO: remove function
 }
 
 function getPercentVal(val) {
     return `(${val}%)`;
 }
 
-function setQuoteVal(element, val, exchangeRate, isChange) {
-    element.innerHTML = exchangeRate ? getDollarVal(val, exchangeRate) : getPercentVal(val);
+function setQuoteVal(element, val, isChange, isPercent = false) {
+    element.innerHTML = isPercent ? getDollarVal(val) : getPercentVal(val);
     if (isChange) {
         if (val > 0) {
             element.setAttribute('class', 'up');
@@ -125,16 +125,16 @@ function setQuoteVal(element, val, exchangeRate, isChange) {
     }
 }
 
-module.exports.setCandle = function(candle, close, exchangeRate) {
+module.exports.setCandle = function(candle, close) {
     candleGraph.data.labels = getReadableDates(candle.t);
-    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val, exchangeRate));
+    candleGraph.data.datasets[0].data = candle.c.map(val => getDollarVal(val));
     candleGraph.data.datasets[1].data = candle.v.map(val => val / 1000);
-    candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(close, exchangeRate);
-    candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(close, exchangeRate);
+    candleGraph.options.plugins.annotation.annotations['close'].yMin = getDollarVal(close);
+    candleGraph.options.plugins.annotation.annotations['close'].yMax = getDollarVal(close);
     candleGraph.update();
 }
 
-module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
+module.exports.renderSummary = function(name, quote, candle) {
     if (candle.s !== 'ok') {
         return;
     }
@@ -150,14 +150,14 @@ module.exports.renderSummary = function(name, quote, candle, exchangeRate) {
         arrow.className = '';
         arrow.innerHTML = '';
     }
-    setQuoteVal(document.getElementById('current'), quote.c, exchangeRate, false);
-    setQuoteVal(document.getElementById('change'), quote.d, exchangeRate, true);
-    setQuoteVal(document.getElementById('percent-change'), quote.dp, false, true);
-    setQuoteVal(document.getElementById('high'), quote.h, exchangeRate, false);
-    setQuoteVal(document.getElementById('low'), quote.l, exchangeRate, false);
-    setQuoteVal(document.getElementById('open'), quote.o, exchangeRate, false);
-    setQuoteVal(document.getElementById('close'), quote.pc, exchangeRate, false);
-    this.setCandle(candle, quote.pc, exchangeRate);
+    setQuoteVal(document.getElementById('current'), quote.c, false);
+    setQuoteVal(document.getElementById('change'), quote.d, true);
+    setQuoteVal(document.getElementById('percent-change'), quote.dp, true, true);
+    setQuoteVal(document.getElementById('high'), quote.h, false);
+    setQuoteVal(document.getElementById('low'), quote.l, false);
+    setQuoteVal(document.getElementById('open'), quote.o, false);
+    setQuoteVal(document.getElementById('close'), quote.pc, false);
+    this.setCandle(candle, quote.pc);
     document.getElementById('display-currency').innerHTML = document.getElementById('currency').value;
 }
 
@@ -172,61 +172,61 @@ function renderRelativeStrengthAnalysis(candle, spyCandle) {
     }];
 }
 
-function renderMovingAvg(candle, exchangeRate) {
+function renderMovingAvg(candle) {
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
     technicalAnalysisGraph.data.datasets = [{
         type: 'line', 
         label: '20 Day SMA', 
-        data: getMovingAvg(candle.c.slice(40), 20).map(val => getDollarVal(val, exchangeRate)), 
+        data: getMovingAvg(candle.c.slice(40), 20).map(val => getDollarVal(val)), 
         borderColor: '#2779e6', 
         radius: 0
     }, {
         type: 'line', 
         label: '60 Day SMA', 
-        data: getMovingAvg(candle.c, 60).map(val => getDollarVal(val, exchangeRate)), 
+        data: getMovingAvg(candle.c, 60).map(val => getDollarVal(val)), 
         borderColor: '#e99921', 
         radius: 0
     }];
 }
 
-function renderBollingerBands(candle, exchangeRate) {
+function renderBollingerBands(candle) {
     const bollingerBands = getBollingerBands(candle.c, 60, 2);
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(60));
     technicalAnalysisGraph.data.datasets = [{
         type: 'line',
         label: 'Price',
-        data: candle.c.slice(60).map(val => getDollarVal(val, exchangeRate)), 
+        data: candle.c.slice(60).map(val => getDollarVal(val)), 
         borderColor: '#2779e6',
         radius: 0
     }, {
         type: 'line',
         label: '60 Day SMA',
-        data: bollingerBands.movingAvg.map(val => getDollarVal(val, exchangeRate)), 
+        data: bollingerBands.movingAvg.map(val => getDollarVal(val)), 
         borderColor: '#e99921',
         radius: 0
     }, {
         type: 'line',
         label: 'SMA + 2 Std Deviations',
-        data: bollingerBands.upperBand.map(val => getDollarVal(val, exchangeRate)), 
+        data: bollingerBands.upperBand.map(val => getDollarVal(val)), 
         borderColor: '#e99921',
         borderDash: [6, 6],
         radius: 0
     }, {
         type: 'line',
         label: 'SMA - 2 Std Deviations',
-        data: bollingerBands.lowerBand.map(val => getDollarVal(val, exchangeRate)), 
+        data: bollingerBands.lowerBand.map(val => getDollarVal(val)), 
         borderColor: '#e99921',
         borderDash: [6, 6],
         radius: 0
     }];
 }
 
-function renderMomentumOscillator(candle, exchangeRate) {
+function renderMomentumOscillator(candle) {
     technicalAnalysisGraph.data.labels = getReadableDates(candle.t.slice(10));
     technicalAnalysisGraph.data.datasets = [{
         type: 'line', 
         label: 'Momentum',
-        data: getMomentumOscillator(candle.c).map(val => getDollarVal(val, exchangeRate)), 
+        data: getMomentumOscillator(candle.c).map(val => getDollarVal(val)), 
         borderColor: '#2779e6', 
         radius: 0
     }];
@@ -260,13 +260,13 @@ module.exports.renderTechnicalAnalysis = function(option, data) {
             renderRelativeStrengthAnalysis(data.candle, data.benchmarkCandle);
             break;
         case 'moving-avg':
-            renderMovingAvg(data.candle, data.exchangeRate);
+            renderMovingAvg(data.candle);
             break;
         case 'bollinger-bands':
-            renderBollingerBands(data.candle, data.exchangeRate);
+            renderBollingerBands(data.candle);
             break;
         case 'momentum-oscillator':
-            renderMomentumOscillator(data.candle, data.exchangeRate);
+            renderMomentumOscillator(data.candle);
             break;
         default:
             return;

@@ -14,23 +14,9 @@
             <div id="search-bar">
                 <input id="input-ticker" type="text" name="ticker" placeholder="Search a US ticker"
                 ><button id="search" type="button" class="material-icons">search</button>
-                <button id="settings" class="material-icons">settings</button>
             </div>
         </nav>
         <div id="page-content">
-            <div id="settings-window" class="popup" hidden>
-                <button id="close-settings" class="material-icons">close</button>
-                <div id="settings-options">
-                    <label for="currency">Select a currency:</label>
-                    <select name="currency" id="currency">
-                        <option value="USD" selected>USD</option>
-                        <option value="CAD">CAD</option>
-                        <option value="EUR">EUR</option>
-                    </select>
-                    <p class="very-small">All nominal values will be converted using the current exchange rate.<br>
-                       Refresh the page to update to the latest exchage rate.</p>
-                </div>
-            </div>
             <div class="tab">
                 <button class="tablinks active" value="summary">Summary</button>
                 <button class="tablinks" value="technical-analysis">Technical Analysis</button>

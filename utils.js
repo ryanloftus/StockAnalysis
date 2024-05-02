@@ -1,12 +1,12 @@
+const apiKey = '<API_KEY>';
 const endpointBuilder = {
     url: 'https://finnhub.io/api/v1/',
-    apiKey: '&token=c41hlviad3ies3kt3gmg',
+    apiKey: '&token=' + apiKey,
     param: {
         lookup: 'search?q=',
         quote: 'quote?symbol=',
         candle: 'stock/candle?symbol=',
         recommendations: 'stock/recommendation?symbol=',
-        forex: 'forex/rates?base=',
         news: 'company-news?symbol='
     },
     getEndpoint: function(options, ticker) {
@@ -14,7 +14,6 @@ const endpointBuilder = {
     }
 };
 
-module.exports.GET_FOREX = {paramKey: 'forex'};
 module.exports.GET_LOOKUP = {paramKey: 'lookup'};
 module.exports.GET_QUOTE = {paramKey: 'quote'};
 module.exports.GET_CANDLE = {paramKey: 'candle', dateRange: {name: 'date-range'}};
